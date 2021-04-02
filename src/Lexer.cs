@@ -1,17 +1,15 @@
 ﻿using System.Diagnostics;
 using System.Threading;
+using Serilog;
 
 namespace PythonCSharpTranslator
 {
-    public class Lexer
+    public class Lexer : ThreadWrapper
     {
-        public void Run()
+        protected override void DoWork()
         {
-            while (true)
-            {
-                // Debug.Log("Lexer running...");
-                Thread.Sleep(1000);
-            }
+            Log.Information("Lexer running...");
+            Thread.Sleep(1000);
         }
     }
 }

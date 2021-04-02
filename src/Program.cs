@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Serilog;
 
 namespace PythonCSharpTranslator
@@ -10,23 +11,16 @@ namespace PythonCSharpTranslator
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File("logs\\logfile_yyyyDDmm.txt")
+                .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
 
-            Log.Information("Hello, world!");
+            Lexer lexer = new Lexer();
+            lexer.Start();
 
-            try
-            {
-                Log.Warning("Warning message..");
-                Log.Debug("debug message..");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error message");
-            }
-
-            Log.CloseAndFlush();
             Console.ReadKey();
+            lexer.Stop();
+            lexer.Join();
+            Log.CloseAndFlush();
         }
     }
 }
