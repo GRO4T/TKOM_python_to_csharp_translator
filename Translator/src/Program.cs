@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Threading;
+using PythonCSharpTranslator;
 using Serilog;
 
 namespace PythonCSharpTranslator
 {
-    class Program
+    internal static class Program
     {
         static void Main(string[] args)
         {
