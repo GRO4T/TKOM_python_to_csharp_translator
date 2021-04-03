@@ -1,0 +1,27 @@
+whitespace ::= " "
+newline ::= "\n"
+tab ::= "\t"
+
+identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
+digit ::= [0-9]
+constant ::= digit digit*
+variable ::= identifier
+value ::= constant | variable | function_call
+
+function_call ::= identifier "(" ((value ",")* value)? ")"
+
+logical_operator ::= "or" | "not" | "and"
+comparison_operator ::= "==" | "<=" | "<" | ">=" | ">" | "!="
+
+logical_statement ::= value | (not value) | value ("and" | "or" | comparision_operator) value
+logical_expression ::= logical_statement | "(" logical_expression ")" ("and" | "or") "(" logical_expression ")"
+
+statement ::= function_call | (variable "=" value)
+
+if_statement ::= "if" (logical_expression | ("(" logical_expression ")"))
+while_statement ::= "while" (logical_expression | ("(" logical_expression ")"))
+for_statetemt ::= "for" identifier "in" (function_call | variable)
+
+new_block_statement ::= if_statement | while_statement | for_statement
+
+block_statement ::= (statement newline block_statement) | (new_block_statement (tab block_statement)+)

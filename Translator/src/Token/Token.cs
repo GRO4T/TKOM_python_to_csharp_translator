@@ -5,7 +5,7 @@ namespace PythonCSharpTranslator
 {
     public class Token
     {
-        public int Type { get; set; }
+        public TokenType Type { get; set; }
 
         private object _value;
         
