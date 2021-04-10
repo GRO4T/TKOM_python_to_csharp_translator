@@ -1,27 +1,11 @@
-# TKOM Projekt
-
-## Protipy
-* Składnię piszemy w EBNF (stosujemy czcionkę o stałej szerokości) (warto skorzystać z narzędzi do EBNFa)
-
-## Ewentualne rozszerzenia
-mapowanie identyfikatorów dostępu
-def func() -> public func
-def _func() -> protected func
-def __func() -> private func
-
-## Pytania
-Czy translator ma sprawdzać takie rzeczy czy np. stałe nie została zmodyfikowana po deklaracji? 
-Co powinno być przesyłane do analizy semantycznej?
-Czy zwalidowane drzewa wyprowadzeń możemy już translować?
-Czy powinienem tokenizować symbol **:** ?
-
-
 ## Damian Kolaska
-[TOC]
 # TKOM Dokumentacja Etap 1
-Celem projektu jest napisanie translatora podzbioru języka Python do C#. Projekt zamierzam wykonać w C#.
-## Specyfikacja podzbioru
+[TOC]
+Celem projektu jest napisanie translatora podzbioru języka Python do C#. Projekt zamierzam wykonać w języku C# (*.NET Core*).
+Powstały kod powinien dać się skompilować i uruchomić w środowisku *.NET Core*.
+Aplikacja powinna wczytywać kod Pythona z pliku.
 
+## Specyfikacja podzbioru
 ### **operatory**
 **arytmetyczne**
 +, -, \*, /
@@ -52,6 +36,7 @@ const String var3 = "Hello World";
 Przy zmiennych typ określamy przy pomocy konstruktorów
 *Python*
 ```python=
+var0 = int()
 var1 = int(3)
 var2 = float(3.5)
 var3 = str("Hello World")
@@ -59,6 +44,7 @@ var4 = MyClass("my_class_name")
 ```
 *C#*
 ```csharp=
+int var0;
 int var1 = 3;
 double var2 = 3.5;
 String var3 = "Hello World";
@@ -92,6 +78,58 @@ class Program
 }
 ```
 
+## Składnia
+W pliku syntax.pdf znajdują się diagramy obrazujące składnię wygenerowane przy użyciu
+https://bottlecaps.de/rr/ui
+
+```ebnf
+newline ::= "\n"
+tab ::= "\t"
+
+identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
+type ::= "int" | "float" | "string" | "bool"
+digit ::= [0-9]
+
+variable ::= identifier
+
+constant ::= ([1-9] digit*) | "0"
+logical_value ::= True | False
+string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
+value ::= constant | logical_value | string
+
+function_arg ::= value | function_call | variable
+function_call ::= identifier "(" ((function_arg ",")* function_arg)? ")"
+
+comparison_operator ::= "<=" | "<" | ">=" | ">"
+equality_operator ::= "==" | "!="
+
+logical_formula ::= 
+	(variable equality_operator (string | constant | logical_value | function_call)) |
+    (function_call equality_operator (string | constant | logical_value | function_call)) |
+    ((constant | variable | function_call) comparison_operator (constant | variable | function_call)) |
+    ((constant | logical_value) | (not? (variable | function_call)))
+logical_expression ::= 
+	"(" (logical_expression | (logical_expression ("and" | "or") logical_expression)) ")"
+
+if_statement ::= "if" logical_expression ":" newline
+while_loop ::= "while" logical_expression ":" newline
+for_loop ::= "for" identifier "in" "range"
+    "(" (constant | variable | function_call) "," (constant | variable | function_call) ")" ":" newline
+
+function_def ::= 
+	"def" identifier "(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")" ":" newline
+assignment ::= 
+	variable "=" (value | variable | function_call | logical_expression) newline
+variable_def ::= 
+	identifier "=" type "(" ((function_arg ",")* function_arg)? ")" newline
+
+code_block ::= 
+	(
+		(assignment | variable_def) code_block?) | 
+		((if_statement | for_loop | while_loop | function_def) (tab code_block)+
+	)
+```
+
 ## Sposób uruchomienia
 ```
 PythonCSharpTrs -o output.cs input.py
@@ -115,15 +153,13 @@ SemanticAnalyzer -> Translator : zwalidowane struktury składniowe
 Wynikiem pracy Translatora jest plik źródłowy z rozszerzeniem *.cs*.
 
 ## Wymagania funkcjonalne
-* aplikacja powinna tłumaczyć kod Pythona na możliwy do uruchomienia kod C#
-* aplikacja powinna móc wczytać kod źródłowy Pythona z pliku
 * program powinien móc wyświetlić zbudowane struktury składniowe
 
-## Wymagania niefunkcjonalne
-* program nie powinien niepotrzebnie zużywać zasobów. Wątki powinny blokować się w oczekiwaniu na dane.
+## Wstępne założenia implementacyjne
+* lekser i parser uruchamiane współbieżnie
 * limit długości łańcuchów znakowych: 20000 znaków.
-* program powinien osiągać możliwie maksymalną współbieżność
-* program powinien dostarczać czytelne logi wykonania i zapisywać je do pliku
+* zapisywanie logów wykonania do pliku
+* możliwość wyświetlania drzew wyprowadzeń
 
 ## Obsługa błędów
 Błędy obsługiwany przy pomocy mechanizmu wyjątków.
@@ -153,6 +189,7 @@ Aby zwiększyć ilość informacji zwrotnej, po części z błędów, należało
 public enum TokenType
 {
     End,
+    Indent,
     Identifier,
     Type,
     Value,
