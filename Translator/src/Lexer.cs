@@ -1,15 +1,32 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using Serilog;
+using Translator;
 
 namespace PythonCSharpTranslator
 {
-    public class Lexer : ThreadWrapper
+    public class Lexer
     {
-        protected override void DoWork()
+        private CharacterSource _source;
+
+        public Lexer()
         {
-            Log.Information("Lexer running...");
-            Thread.Sleep(1000);
+            _source = new CharacterSource("Resources/input.py");
         }
+
+        public Token GetNextToken()
+        {
+            char? c = _source.GetChar();
+            Log.Information($"Lexer fetched character: {c}");
+            if (c == null)
+                return new Token(TokenType.End);
+            Thread.Sleep(100);
+            return new Token(TokenType.Identifier, c.ToString());
+        }
+    }
+
+    internal class ArrayList<T>
+    {
     }
 }

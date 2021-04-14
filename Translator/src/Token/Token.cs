@@ -8,18 +8,33 @@ namespace PythonCSharpTranslator
         public TokenType Type { get; set; }
 
         private object _value;
-        
+
+        public Token()
+        {
+            
+        }
+
+        public Token(TokenType type)
+        {
+            Type = type;
+        }
+        public Token(TokenType type, object value)
+        {
+            Type = type;
+            Value = value;
+        }
+
         public object Value
         {
             get { return _value;  }
             set
             {
                 var t = value.GetType();
-                if (t.Equals(typeof(int)))
-                    _value = (int) value;
-                else if (t.Equals(typeof(double)))
-                    _value = (double) value;
-                else if (t.Equals(typeof(string)))
+                if (t == typeof(int?))
+                    _value = (int?) value;
+                else if (t == typeof(double?))
+                    _value = (double?) value;
+                else if (t == typeof(string))
                     _value = (string) value;
                 else
                     throw new TokenWrongValueTypeException(

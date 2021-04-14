@@ -1,6 +1,6 @@
 ## Damian Kolaska
-# TKOM Dokumentacja Etap 1
 [TOC]
+# TKOM Dokumentacja Etap 1
 Celem projektu jest napisanie translatora podzbioru języka Python do C#. Projekt zamierzam wykonać w języku C# (*.NET Core*).
 Powstały kod powinien dać się skompilować i uruchomić w środowisku *.NET Core*.
 Aplikacja powinna wczytywać kod Pythona z pliku.
@@ -20,13 +20,13 @@ not, and, or
 ### **stałe**
 W przypadku stałej nie specyfikujemy typu
 *Python*
-```python=
+```python
 var1 = 3
 var2 = 3.5
 var3 = "Hello World"
 ```
 *C#*
-```csharp=
+```c#
 const int var1 = 3;
 const double var2 = 3.5;
 const String var3 = "Hello World";
@@ -35,7 +35,7 @@ const String var3 = "Hello World";
 ### **zmienne**
 Przy zmiennych typ określamy przy pomocy konstruktorów
 *Python*
-```python=
+```python
 var0 = int()
 var1 = int(3)
 var2 = float(3.5)
@@ -43,7 +43,7 @@ var3 = str("Hello World")
 var4 = MyClass("my_class_name")
 ```
 *C#*
-```csharp=
+```c#
 int var0;
 int var1 = 3;
 double var2 = 3.5;
@@ -52,20 +52,17 @@ MyClass var4 = MyClass("my_class_name");
 ```
 
 ### **domyślna klasa**
-Zmienne, metody, klasy itd. nienależące do żadnej klasy, w C# trafiają do domyślnej klasy *Program* oraz
-mają publiczny dostęp.
+Zmienne, metody, klasy itd. nienależące do żadnej klasy, w C# trafiają do domyślnej klasy *Program* oraz mają publiczny dostęp.
 *Python*
-```python=
+```python
 var = 3
 def func(arg: float) -> int:
     loc_var = int(2)
     loc_var = loc_var + 2
     return loc_var * arg
-    # alternatywna opcja specyfikacji return type
-    # return int(arg1 * arg2)
 ```
 *C#*
-```csharp=
+```c#
 class Program
 {
     public const int var = 3;
@@ -78,11 +75,17 @@ class Program
 }
 ```
 
+### Nawiasy
+Dla uproszczenia składni zakładam, że nie dopuszczam notacji bez nawiasów
+```python
+if x == 1:
+    pass
+```
+
 ## Składnia
 W pliku syntax.pdf znajdują się diagramy obrazujące składnię wygenerowane przy użyciu
 https://bottlecaps.de/rr/ui
-
-```ebnf
+```
 newline ::= "\n"
 tab ::= "\t"
 
@@ -117,7 +120,8 @@ for_loop ::= "for" identifier "in" "range"
     "(" (constant | variable | function_call) "," (constant | variable | function_call) ")" ":" newline
 
 function_def ::= 
-	"def" identifier "(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")" ":" newline
+	"def" identifier "(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")"
+        ("->" type)? ":" newline
 assignment ::= 
 	variable "=" (value | variable | function_call | logical_expression) newline
 variable_def ::= 
@@ -131,7 +135,7 @@ code_block ::=
 ```
 
 ## Sposób uruchomienia
-```
+```shell
 PythonCSharpTrs -o output.cs input.py
 ```
 
@@ -152,9 +156,6 @@ Parser -> SemanticAnalyzer : zbudowane struktury składniowe
 SemanticAnalyzer -> Translator : zwalidowane struktury składniowe
 Wynikiem pracy Translatora jest plik źródłowy z rozszerzeniem *.cs*.
 
-## Wymagania funkcjonalne
-* program powinien móc wyświetlić zbudowane struktury składniowe
-
 ## Wstępne założenia implementacyjne
 * lekser i parser uruchamiane współbieżnie
 * limit długości łańcuchów znakowych: 20000 znaków.
@@ -164,28 +165,31 @@ Wynikiem pracy Translatora jest plik źródłowy z rozszerzeniem *.cs*.
 ## Obsługa błędów
 Błędy obsługiwany przy pomocy mechanizmu wyjątków.
 Aby zwiększyć przewidywalność powstanie niestandardowa klasa wyjątku oraz klasy z niej dziedziczące.
-Aby zwiększyć ilość informacji zwrotnej, po części z błędów, należałoby kontynuuować proces translacji.
+Przez kontynuujemy rozumiem, zapamiętujemy błąd i kontynuujemy w poszukiwaniu kolejnych.
 **Lexer**
-* nieznany token -> przerywamy translację
-* brak wcięcia/złe wcięcie : zakładamy poprawne wcięcie
+* nieznany token
 
 **Parser**
+* brak wcięcia/złe wcięcie
 * brakujące nawiasy
+    ```python
+    if ((var == 1 and (var2 == 2)): # 3 nawiasy otwierające, a tylko 2 zamykające
+    if ((var == 1 and (var2 == 2))): # dokładamy brakujące nawiasy na koniec i kontynuujemy
     ```
-    if (var == 1: # dokładamy brakujący nawias i kontynuujemy
-    if var == 1 and var2 == 3: # przerywamy translację
-    ```
+* inna nieznana struktura składniowa
 
 **SymbolManager**
 * wielokrotnie zadeklarowany symbol -> zakładamy za poprawną tylko pierwszą deklarację i kontynuujemy
 * symbol nieznany -> przerywamy
+* przypisanie zmiennej złego typu
+* potraktowanie zmiennej jak funkcji
 
 **Translator**
 * stała niemieszcząca się w słowie maszynowym -> obcinamy stałą tak, aby mieściła się w zakresie i kontynuujemy
 
 
 ## Typy Tokenów
-```csharp=
+```c#
 public enum TokenType
 {
     End,
@@ -193,13 +197,14 @@ public enum TokenType
     Identifier,
     Type,
     Value,
+    Arrow,
+    Return,
 
     Assignment,
     Colon,
     Comma,
     LeftParenthesis,
     RightParenthesis,
-    Return,
 
     Plus,
     Minus,

@@ -15,11 +15,14 @@ namespace PythonCSharpTranslator
                 .CreateLogger();
 
             Lexer lexer = new Lexer();
-            lexer.Start();
+            Token token = lexer.GetNextToken();
+            while (token.Type != TokenType.End)
+            {
+                Log.Information($"Parser fetched token: {token.Type}");
+                token = lexer.GetNextToken();
+            }
+            Log.Information($"Parser fetched token: {token.Type}");
 
-            Console.ReadKey();
-            lexer.Stop();
-            lexer.Join();
             Log.CloseAndFlush();
         }
     }
