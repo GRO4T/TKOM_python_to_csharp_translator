@@ -2,15 +2,15 @@
 
 namespace Translator
 {
-    public class CharacterSource
+    public class FileCharacterSource : ICharacterSource
     {
         private StreamReader _reader;
-
-        public CharacterSource(string path)
+        
+        public FileCharacterSource(string path)
         {
             _reader = new StreamReader(path);
         }
-
+        
         public char? GetChar()
         {
             if (_reader.Peek() >= 0) 

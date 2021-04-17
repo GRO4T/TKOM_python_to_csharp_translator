@@ -1,7 +1,7 @@
-﻿using System;
+﻿using PythonCSharpTranslator;
 using PythonCSharpTranslator.Exception;
 
-namespace PythonCSharpTranslator
+namespace Translator.Token
 {
     public class Token
     {
@@ -26,14 +26,14 @@ namespace PythonCSharpTranslator
 
         public object Value
         {
-            get { return _value;  }
+            get => _value;
             set
             {
                 var t = value.GetType();
-                if (t == typeof(int?))
-                    _value = (int?) value;
-                else if (t == typeof(double?))
-                    _value = (double?) value;
+                if (t == typeof(int))
+                    _value = (int) value;
+                else if (t == typeof(double))
+                    _value = (double) value;
                 else if (t == typeof(string))
                     _value = (string) value;
                 else

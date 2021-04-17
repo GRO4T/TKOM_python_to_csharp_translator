@@ -1,11 +1,14 @@
-﻿namespace PythonCSharpTranslator
+﻿namespace Translator.Token
 {
     public enum TokenType
     {
         End,
         Identifier,
-        Type,
-        Value,        
+        
+        Int,
+        String,
+        Bool,
+        Float,
         
         Assignment,
         Colon,
@@ -16,12 +19,13 @@
         
         Plus,
         Minus,
-        Mult,
-        Div,
+        Star,
+        Slash,
         
         LessThan,
         GreaterThan,
         Equals,
+        NotEquals,
         LessEqualThan,
         GreaterEqualThan,
         
@@ -33,5 +37,7 @@
         While,
         If,
         Def,
+        
+        Unknown
     }
 }

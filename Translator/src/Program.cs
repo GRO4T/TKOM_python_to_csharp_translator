@@ -1,8 +1,9 @@
-﻿using System;
-using PythonCSharpTranslator;
+﻿using PythonCSharpTranslator;
 using Serilog;
+using Translator.CharacterSource;
+using Translator.Token;
 
-namespace PythonCSharpTranslator
+namespace Translator
 {
     internal static class Program
     {
@@ -14,8 +15,8 @@ namespace PythonCSharpTranslator
                 .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
 
-            Lexer lexer = new Lexer();
-            Token token = lexer.GetNextToken();
+            Lexer lexer = new Lexer(new StringCharacterSource("def"));
+            Token.Token token = lexer.GetNextToken();
             while (token.Type != TokenType.End)
             {
                 Log.Information($"Parser fetched token: {token.Type}");

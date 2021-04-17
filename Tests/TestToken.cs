@@ -1,8 +1,9 @@
 ﻿using System;
 using PythonCSharpTranslator.Exception;
+using Translator.Token;
 using Xunit;
 
-namespace PythonCSharpTranslator.Tests
+namespace Tests
 {
     public class TestToken
     {
