@@ -15,7 +15,7 @@ namespace Translator
                 .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
 
-            Lexer lexer = new Lexer(new StringCharacterSource("0.25"));
+            Lexer lexer = new Lexer(new StringCharacterSource("2.75"));
             Token.Token token = lexer.GetNextToken();
             while (token.Type != TokenType.End)
             {

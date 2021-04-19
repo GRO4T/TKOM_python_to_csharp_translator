@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using Translator;
 using Translator.CharacterSource;
 using Translator.Token;
@@ -53,7 +54,7 @@ namespace Tests
         [InlineData("HelloWorld")]
         [InlineData("trueHello")]
         [InlineData("falseHello")]
-        public void ParseCorrectIdentifier(string identifier)
+        public void ParseIdentifier(string identifier)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
@@ -65,7 +66,7 @@ namespace Tests
         [InlineData("1hello")]
         [InlineData("_inter$#nal_hello")]
         [InlineData("hello#!@")]
-        public void ParseBadIdentifier(string identifier)
+        public void BadIdentifier(string identifier)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
@@ -86,6 +87,8 @@ namespace Tests
         [Theory]
         [InlineData("0.5", 0.5)]
         [InlineData("0.25", 0.25)]
+        [InlineData("2.75", 2.75)]
+        [InlineData("24.54", 24.54)]
         public void ParseDecimalConstant(string testString, double expectedValue)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -103,6 +106,25 @@ namespace Tests
             Token token = lexer.GetNextToken();
             Assert.Equal(TokenType.IntConstant, token.Type);
             Assert.Equal(expectedValue, token.Value);
+        }
+
+        [Theory]
+        [InlineData("\"hello\"", "hello")]
+        public void ParseStringLiteral(string testString, string expectedValue)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.StringLiteral, token.Type);
+            Assert.Equal(expectedValue, token.Value);
+        }
+
+        [Theory]
+        [InlineData("\"unfinished literal")]
+        public void BadStringLiteral(string testString)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.Unknown, token.Type);
         }
     }
 }

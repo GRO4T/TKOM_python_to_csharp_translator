@@ -49,12 +49,21 @@ namespace Translator
 
         private Token.Token ParseStringLiteral()
         {
-            throw new NotImplementedException();
+            _tokenValue = "";
+            GetChar();
+            while (_lastCharacter != '\"')
+            {
+                if (_sourceEnd)
+                    return new Token.Token(TokenType.Unknown);
+                _tokenValue = (string) _tokenValue + _lastCharacter;
+                GetChar(); 
+            }
+            return new Token.Token(TokenType.StringLiteral, _tokenValue);
         }
 
         private Token.Token ParseNumericConstant()
         {
-            Log.Debug(_tokenValue.ToString());
+            _tokenValue = 0;
             if (_lastCharacter == '0')
             {
                 GetChar();
@@ -69,32 +78,31 @@ namespace Translator
 
         private Token.Token ParseIntegerConstant()
         {
-            _tokenValue = 0;
             while (!NextToken())
             {
                 _tokenValue = (int) _tokenValue * 10 + (_lastCharacter - '0');
-                if (!char.IsDigit(_lastCharacter))
+                GetChar();
+                if (!char.IsDigit(_lastCharacter) && !NextToken())
                 {
                     if (_lastCharacter == '.')
                         return ParseDecimalConstant();
                     return new Token.Token(TokenType.Unknown);
                 }
-                GetChar();
             }
             return new Token.Token(TokenType.IntConstant, _tokenValue);
         }
 
         private Token.Token ParseDecimalConstant()
         {
-            _tokenValue = 0.0;
+            _tokenValue = Convert.ToDouble(_tokenValue); 
             GetChar();
             int i = 1;
             while (!NextToken())
             {
                 _tokenValue =  (double)_tokenValue + (_lastCharacter - '0') / Math.Pow(10.0, i++);
-                if (!char.IsDigit(_lastCharacter))
-                    return new Token.Token(TokenType.Unknown);
                 GetChar();
+                if (!char.IsDigit(_lastCharacter) && !NextToken())
+                    return new Token.Token(TokenType.Unknown);
             }
             return new Token.Token(TokenType.DecimalConstant, _tokenValue);
         }
