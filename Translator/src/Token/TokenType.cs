@@ -38,6 +38,11 @@
         If,
         Def,
         
+        LogicalConstant,
+        DecimalConstant,
+        IntConstant,
+        StringLiteral,
+        
         Unknown
     }
 }

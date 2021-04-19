@@ -1,4 +1,5 @@
-﻿using Translator;
+﻿using System;
+using Translator;
 using Translator.CharacterSource;
 using Translator.Token;
 using Xunit;
@@ -50,12 +51,58 @@ namespace Tests
         [InlineData("__hello_2")]
         [InlineData("helloWorld")]
         [InlineData("HelloWorld")]
+        [InlineData("trueHello")]
+        [InlineData("falseHello")]
         public void ParseCorrectIdentifier(string identifier)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
             Assert.Equal(TokenType.Identifier, token.Type);
             Assert.Equal(identifier, token.Value);
+        }
+        
+        [Theory]
+        [InlineData("1hello")]
+        [InlineData("_inter$#nal_hello")]
+        [InlineData("hello#!@")]
+        public void ParseBadIdentifier(string identifier)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(identifier));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.Unknown, token.Type);
+        }
+    
+        [Theory]
+        [InlineData("true", true)]
+        [InlineData("false", false)]
+        public void ParseLogicalConstant(string testString, bool expectedValue)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.LogicalConstant, token.Type);
+            Assert.Equal(expectedValue, token.Value);
+        }
+    
+        [Theory]
+        [InlineData("0.5", 0.5)]
+        [InlineData("0.25", 0.25)]
+        public void ParseDecimalConstant(string testString, double expectedValue)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.DecimalConstant, token.Type);
+            Assert.Equal(expectedValue, token.Value);
+        }
+
+        [Theory]
+        [InlineData("0", 0)]
+        [InlineData("1234", 1234)]
+        public void ParseIntegerConstant(string testString, int expectedValue)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token = lexer.GetNextToken();
+            Assert.Equal(TokenType.IntConstant, token.Type);
+            Assert.Equal(expectedValue, token.Value);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Tests
         public void SetWrongValueType_ExceptionIsThrown()
         {
             var token = new Token();
-            Assert.Throws<TokenWrongValueTypeException>(() => token.Value = false); 
+            Assert.Throws<TokenWrongValueTypeException>(() => token.Value = new Token(TokenType.And)); 
         }
         
         [Fact]

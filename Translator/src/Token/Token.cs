@@ -36,6 +36,8 @@ namespace Translator.Token
                     _value = (double) value;
                 else if (t == typeof(string))
                     _value = (string) value;
+                else if (t == typeof(bool))
+                    _value = (bool) value;
                 else
                     throw new TokenWrongValueTypeException(
                         $"Wrong token value:{t}"
