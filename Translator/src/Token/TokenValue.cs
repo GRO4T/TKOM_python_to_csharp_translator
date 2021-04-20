@@ -4,7 +4,7 @@ namespace Translator.Token
 {
     public class TokenValue
     {
-        private object _value;
+        public object Value { get; private set; }
 
         public TokenValue()
         {
@@ -21,61 +21,71 @@ namespace Translator.Token
 
         public int GetInt()
         {
-            return (int) _value;
+            return (int) Value;
         }
         public double GetDouble()
         {
-            return (double) _value;
+            return (double) Value;
         }
 
         public string GetString()
         {
-            return (string) _value;
+            return (string) Value;
         }
 
         public bool GetBool()
         {
-            return (bool) _value;
+            return (bool) Value;
+        }
+
+        public object GetObject()
+        {
+            return Value;
         }
 
         public void SetInt(int value)
         {
-            _value = value;
+            Value = value;
         }
 
         public void SetDouble(double value)
         {
-            _value = value;
+            Value = value;
         }
 
         public void SetString(string s)
         {
-            _value = s;
+            Value = s;
         }
 
         public void SetBool(bool value)
         {
-            _value = value;
+            Value = value;
         }
         
         public void AddInt(int value)
         {
-            _value = (int) _value + value;
+            Value = (int) Value + value;
         }
 
         public void AddDouble(double value)
         {
-            _value = (double) _value + value;
+            Value = (double) Value + value;
         }
 
         public void ConcatString(string s)
         {
-            _value = (string) _value + s;
+            Value = (string) Value + s;
         }
 
         public void ConvertToDouble()
         {
-            _value = Convert.ToDouble(_value);
+            Value = Convert.ToDouble(Value);
+        }
+
+        public override string ToString()
+        {
+            return Value.ToString();
         }
     }
 }

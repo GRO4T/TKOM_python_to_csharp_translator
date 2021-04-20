@@ -1,4 +1,5 @@
-﻿using PythonCSharpTranslator;
+﻿using System;
+using PythonCSharpTranslator;
 using PythonCSharpTranslator.Exception;
 
 namespace Translator.Token
