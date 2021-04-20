@@ -1,43 +1,50 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Translator;
 using Translator.CharacterSource;
 using Translator.Token;
 using Xunit;
+using Xunit.Abstractions;
+using static Translator.Token.TokenType;
 
 namespace Tests
 {
     public class TestLexer
     {
         [Theory]
-        [InlineData("", TokenType.End)]
-        [InlineData("int", TokenType.Int)]
+        [InlineData("", End)]
+        [InlineData("int", Int)]
         [InlineData("str", TokenType.String)]
-        [InlineData("float", TokenType.Float)]
-        [InlineData("bool", TokenType.Bool)]
-        [InlineData("(", TokenType.LeftParenthesis)]
-        [InlineData(")", TokenType.RightParenthesis)]
-        [InlineData(",", TokenType.Comma)]
-        [InlineData(":", TokenType.Colon)]
-        [InlineData("=", TokenType.Assignment)]
-        [InlineData("+", TokenType.Plus)]
-        [InlineData("-", TokenType.Minus)]
-        [InlineData("*", TokenType.Star)]
-        [InlineData("/", TokenType.Slash)]
-        [InlineData("return", TokenType.Return)]
-        [InlineData("<", TokenType.LessThan)]
-        [InlineData(">", TokenType.GreaterThan)]
+        [InlineData("float", Float)]
+        [InlineData("bool", Bool)]
+        [InlineData("(", LeftParenthesis)]
+        [InlineData(")", RightParenthesis)]
+        [InlineData(",", Comma)]
+        [InlineData(":", Colon)]
+        [InlineData("=", Assignment)]
+        [InlineData("+", Plus)]
+        [InlineData("-", Minus)]
+        [InlineData("*", Star)]
+        [InlineData("/", Slash)]
+        [InlineData("return", Return)]
+        [InlineData("<", LessThan)]
+        [InlineData(">", GreaterThan)]
         [InlineData("==", TokenType.Equals)]
-        [InlineData("!=", TokenType.NotEquals)]
-        [InlineData("<=", TokenType.LessEqualThan)]
-        [InlineData(">=", TokenType.GreaterEqualThan)]
-        [InlineData("not", TokenType.Not)]
-        [InlineData("and", TokenType.And)]
-        [InlineData("or", TokenType.Or)]
-        [InlineData("for", TokenType.For)]
-        [InlineData("while", TokenType.While)]
-        [InlineData("if", TokenType.If)]
-        [InlineData("def", TokenType.Def)]
+        [InlineData("!=", NotEquals)]
+        [InlineData("<=", LessEqualThan)]
+        [InlineData(">=", GreaterEqualThan)]
+        [InlineData("not", Not)]
+        [InlineData("and", And)]
+        [InlineData("or", Or)]
+        [InlineData("for", For)]
+        [InlineData("while", While)]
+        [InlineData("if", If)]
+        [InlineData("def", Def)]
+        [InlineData("\n", Newline)]
+        [InlineData("\t", Indent)]
+        [InlineData("->", Arrow)]
         public void ParseSingleTypeOnlyToken(string testString, TokenType expectedToken)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -58,7 +65,7 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.Identifier, token.Type);
+            Assert.Equal(Identifier, token.Type);
             Assert.Equal(identifier, token.Value);
         }
         
@@ -70,17 +77,17 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.Unknown, token.Type);
+            Assert.Equal(Unknown, token.Type);
         }
     
         [Theory]
-        [InlineData("true", true)]
-        [InlineData("false", false)]
+        [InlineData("True", true)]
+        [InlineData("False", false)]
         public void ParseLogicalConstant(string testString, bool expectedValue)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.LogicalConstant, token.Type);
+            Assert.Equal(LogicalConstant, token.Type);
             Assert.Equal(expectedValue, token.Value);
         }
     
@@ -93,18 +100,19 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.DecimalConstant, token.Type);
+            Assert.Equal(DecimalConstant, token.Type);
             Assert.Equal(expectedValue, token.Value);
         }
 
         [Theory]
         [InlineData("0", 0)]
+        [InlineData("1", 1)]
         [InlineData("1234", 1234)]
         public void ParseIntegerConstant(string testString, int expectedValue)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.IntConstant, token.Type);
+            Assert.Equal(IntConstant, token.Type);
             Assert.Equal(expectedValue, token.Value);
         }
 
@@ -114,7 +122,7 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.StringLiteral, token.Type);
+            Assert.Equal(StringLiteral, token.Type);
             Assert.Equal(expectedValue, token.Value);
         }
 
@@ -124,7 +132,55 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(TokenType.Unknown, token.Type);
+            Assert.Equal(Unknown, token.Type);
+        }
+    
+        [Theory]
+        [InlineData("test_integer = int(3)\n", 
+            new[]{Identifier, Assignment, Int, LeftParenthesis, IntConstant, RightParenthesis, Newline})]
+        [InlineData("def hello(arg: int) -> float:\n\tx = 1", 
+            new[]
+            {
+                Def, Identifier, LeftParenthesis, Identifier, Colon, Int, RightParenthesis, Arrow, Float, Colon,
+                Newline, Indent, Identifier, Assignment, IntConstant 
+            })]
+        [InlineData("intValue = 1\n", new[]{Identifier, Assignment, IntConstant, Newline})]
+        public void ParseStatement(string testString, TokenType[] expectedTokens)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token;
+            var tokens = new List<TokenType>();
+            while ((token = lexer.GetNextToken()).Type != End)
+            {
+                tokens.Add(token.Type); 
+            }
+            Assert.Equal(tokens.Count, expectedTokens.Length);
+            for (int i = 0; i < expectedTokens.Length; i++)
+            {
+                Assert.Equal(tokens[i], expectedTokens[i]);
+            }
+        }
+    
+        [Theory]
+        [InlineData("Resources/int_value_then_float_value.py", new[]
+        {
+            Identifier, Assignment, IntConstant, Newline,
+            Identifier, Assignment, DecimalConstant
+        })]
+        public void ParseBlock(string filename, TokenType[] expectedTokens)
+        {
+            Lexer lexer = new Lexer(new FileCharacterSource(filename));
+            Token token;
+            var tokens = new List<TokenType>();
+            while ((token = lexer.GetNextToken()).Type != End)
+            {
+                tokens.Add(token.Type); 
+            }
+            Assert.Equal(tokens.Count, expectedTokens.Length);
+            for (int i = 0; i < expectedTokens.Length; i++)
+            {
+                Assert.Equal(tokens[i], expectedTokens[i]);
+            }
         }
     }
 }

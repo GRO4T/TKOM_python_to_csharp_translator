@@ -23,7 +23,7 @@ namespace Translator.Token
             Type = type;
             Value = value;
         }
-
+        
         public object Value
         {
             get => _value;
@@ -45,6 +45,10 @@ namespace Translator.Token
 
             }
         }
-        
+
+        public override string ToString()
+        {
+            return $"{Type}:{Value}";
+        }
     }
 }

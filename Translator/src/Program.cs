@@ -15,14 +15,16 @@ namespace Translator
                 .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
 
-            Lexer lexer = new Lexer(new StringCharacterSource("2.75"));
+            // Lexer lexer = new Lexer(new StringCharacterSource("test_integer = int(3)"));
+            // Lexer lexer = new Lexer(new StringCharacterSource("intValue = 1"));
+            Lexer lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
             Token.Token token = lexer.GetNextToken();
             while (token.Type != TokenType.End)
             {
-                Log.Information($"Parser fetched token: {token.Type}");
+                Log.Information($"Parser fetched token: {token}");
                 token = lexer.GetNextToken();
             }
-            Log.Information($"Parser fetched token: {token.Type}");
+            Log.Information($"Parser fetched token: {token}");
 
             Log.CloseAndFlush();
         }

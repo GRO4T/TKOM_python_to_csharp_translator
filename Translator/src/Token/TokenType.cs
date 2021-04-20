@@ -2,6 +2,8 @@
 {
     public enum TokenType
     {
+        Indent,
+        Newline,
         End,
         Identifier,
         
@@ -16,6 +18,7 @@
         LeftParenthesis,
         RightParenthesis,
         Return,
+        Arrow,
         
         Plus,
         Minus,
