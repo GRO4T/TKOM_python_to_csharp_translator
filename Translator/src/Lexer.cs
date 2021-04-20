@@ -7,10 +7,10 @@ namespace Translator
 {
     public class Lexer
     {
-        private ICharacterSource _source;
+        private readonly ICharacterSource _source;
         private char _lastCharacter;
         private bool _sourceEnd;
-        private object _tokenValue;
+        private TokenValue _tokenValue;
 
         public Lexer(ICharacterSource characterSource)
         {
@@ -36,7 +36,7 @@ namespace Translator
 
         public Token.Token GetNextToken()
         {
-            _tokenValue = _lastCharacter.ToString(); 
+            _tokenValue = new TokenValue();
             while (_lastCharacter == ' ')
                 GetChar();
             if (_sourceEnd)
@@ -54,13 +54,13 @@ namespace Translator
 
         private Token.Token ParseStringLiteral()
         {
-            _tokenValue = "";
+            _tokenValue.SetString("");
             GetChar();
             while (_lastCharacter != '\"')
             {
                 if (_sourceEnd)
                     return new Token.Token(Unknown);
-                _tokenValue = (string) _tokenValue + _lastCharacter;
+                _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar(); 
             }
             return new Token.Token(StringLiteral, _tokenValue);
@@ -68,14 +68,14 @@ namespace Translator
 
         private Token.Token ParseNumericConstant()
         {
-            _tokenValue = 0;
+            _tokenValue.SetInt(0);
             if (_lastCharacter == '0')
             {
                 GetChar();
                 if (_lastCharacter == '.')
                     return ParseDecimalConstant();
                 if (NextToken())
-                    return new Token.Token(IntConstant, 0);
+                    return new Token.Token(IntConstant, new TokenValue(0));
                 return new Token.Token(Unknown);
             }
             return ParseIntegerConstant();
@@ -85,7 +85,7 @@ namespace Translator
         {
             while (!NextToken())
             {
-                _tokenValue = (int) _tokenValue * 10 + (_lastCharacter - '0');
+                _tokenValue.SetInt(_tokenValue.GetInt() * 10 + (_lastCharacter - '0'));
                 GetChar();
                 if (!char.IsDigit(_lastCharacter) && !NextToken())
                 {
@@ -99,12 +99,12 @@ namespace Translator
 
         private Token.Token ParseDecimalConstant()
         {
-            _tokenValue = Convert.ToDouble(_tokenValue); 
+            _tokenValue.ConvertToDouble();
             GetChar();
             int i = 1;
             while (!NextToken())
             {
-                _tokenValue =  (double)_tokenValue + (_lastCharacter - '0') / Math.Pow(10.0, i++);
+                _tokenValue.AddDouble((_lastCharacter - '0') / Math.Pow(10.0, i++));
                 GetChar();
                 if (!char.IsDigit(_lastCharacter) && !NextToken())
                     return new Token.Token(Unknown);
@@ -117,21 +117,21 @@ namespace Translator
             switch (_lastCharacter)
             {
                 case 'i':
+                    _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
-                    _tokenValue = (string)_tokenValue + _lastCharacter;
                     if (_lastCharacter == 'f')
                         return TryParseSequence("f") ? new Token.Token(If) : ParseIdentifier();
                     else
                         return TryParseSequence("nt") ? new Token.Token(Int) : ParseIdentifier();
                 case 'f':
+                    _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
-                    _tokenValue = (string)_tokenValue + _lastCharacter;
                     if (_lastCharacter == 'l')
                         return TryParseSequence("loat") ? new Token.Token(Float) : ParseIdentifier();
                     else
                         return TryParseSequence("or") ? new Token.Token(For) : ParseIdentifier();
                 case 'F':
-                    return TryParseSequence("False") ? new Token.Token(LogicalConstant, false) : ParseIdentifier();
+                    return TryParseSequence("False") ? new Token.Token(LogicalConstant, new TokenValue(false)) : ParseIdentifier();
                 case 'r':
                     return TryParseSequence("return") ? new Token.Token(Return) : ParseIdentifier();
                 case 's':
@@ -149,7 +149,7 @@ namespace Translator
                 case 'w':
                     return TryParseSequence("while") ? new Token.Token(While) : ParseIdentifier();
                 case 'T':
-                    return TryParseSequence("True") ? new Token.Token(LogicalConstant, true) : ParseIdentifier();
+                    return TryParseSequence("True") ? new Token.Token(LogicalConstant, new TokenValue(true)) : ParseIdentifier();
                 default:
                     return ParseIdentifier();
             }
@@ -161,9 +161,9 @@ namespace Translator
             {
                 if (_lastCharacter != character)
                     return false;
-                GetChar();
                 if (!NextToken())
-                    _tokenValue = (string)_tokenValue + _lastCharacter;
+                    _tokenValue.ConcatString(_lastCharacter.ToString());
+                GetChar();
             }
             return NextToken();
         }
@@ -176,8 +176,8 @@ namespace Translator
             {
                 if (!char.IsLetter(_lastCharacter) && !char.IsDigit(_lastCharacter) && _lastCharacter != '_')
                     return new Token.Token(Unknown);
+                _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
-                _tokenValue = (string)_tokenValue + _lastCharacter;
             }
             return new Token.Token(Identifier, _tokenValue);
         }

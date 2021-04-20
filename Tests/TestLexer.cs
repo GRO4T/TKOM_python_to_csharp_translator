@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Translator;
 using Translator.CharacterSource;
 using Translator.Token;
 using Xunit;
-using Xunit.Abstractions;
 using static Translator.Token.TokenType;
 
 namespace Tests
@@ -66,7 +63,7 @@ namespace Tests
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
             Assert.Equal(Identifier, token.Type);
-            Assert.Equal(identifier, token.Value);
+            Assert.Equal(identifier, token.Value.GetString());
         }
         
         [Theory]
@@ -88,7 +85,7 @@ namespace Tests
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
             Assert.Equal(LogicalConstant, token.Type);
-            Assert.Equal(expectedValue, token.Value);
+            Assert.Equal(expectedValue, token.Value.GetBool());
         }
     
         [Theory]
@@ -101,7 +98,7 @@ namespace Tests
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
             Assert.Equal(DecimalConstant, token.Type);
-            Assert.Equal(expectedValue, token.Value);
+            Assert.Equal(expectedValue, token.Value.GetDouble());
         }
 
         [Theory]
@@ -113,7 +110,7 @@ namespace Tests
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
             Assert.Equal(IntConstant, token.Type);
-            Assert.Equal(expectedValue, token.Value);
+            Assert.Equal(expectedValue, token.Value.GetInt());
         }
 
         [Theory]
@@ -123,7 +120,7 @@ namespace Tests
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
             Assert.Equal(StringLiteral, token.Type);
-            Assert.Equal(expectedValue, token.Value);
+            Assert.Equal(expectedValue, token.Value.GetString());
         }
 
         [Theory]
@@ -167,6 +164,11 @@ namespace Tests
             Identifier, Assignment, IntConstant, Newline,
             Identifier, Assignment, DecimalConstant
         })]
+        [InlineData("Resources/function.py", new[]
+        {
+            Def, Identifier, LeftParenthesis, Identifier, Colon, Int, RightParenthesis, Arrow,
+            Float, Colon, Newline, Identifier, Assignment, IntConstant 
+        })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new FileCharacterSource(filename));
@@ -181,6 +183,23 @@ namespace Tests
             {
                 Assert.Equal(tokens[i], expectedTokens[i]);
             }
+        }
+    
+        [Fact]
+        public void ParseFunctionCheckIdentifierValues()
+        {
+            Lexer lexer = new Lexer(new FileCharacterSource("Resources/function.py"));
+            Token token;
+            var tokens = new List<Token>();
+            while ((token = lexer.GetNextToken()).Type != End)
+            {
+                tokens.Add(token); 
+            }
+
+            List<Token> identifiers = tokens.FindAll((t) => t.Type == Identifier);
+            Assert.Equal("hello", identifiers[0].Value.GetString());
+            Assert.Equal("arg", identifiers[1].Value.GetString());
+            Assert.Equal("x", identifiers[2].Value.GetString());
         }
     }
 }

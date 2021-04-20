@@ -7,7 +7,7 @@ namespace Translator.Token
     {
         public TokenType Type { get; set; }
 
-        private object _value;
+        public TokenValue Value { get; set; }
 
         public Token()
         {
@@ -18,32 +18,10 @@ namespace Translator.Token
         {
             Type = type;
         }
-        public Token(TokenType type, object value)
+        public Token(TokenType type, TokenValue value)
         {
             Type = type;
             Value = value;
-        }
-        
-        public object Value
-        {
-            get => _value;
-            set
-            {
-                var t = value.GetType();
-                if (t == typeof(int))
-                    _value = (int) value;
-                else if (t == typeof(double))
-                    _value = (double) value;
-                else if (t == typeof(string))
-                    _value = (string) value;
-                else if (t == typeof(bool))
-                    _value = (bool) value;
-                else
-                    throw new TokenWrongValueTypeException(
-                        $"Wrong token value:{t}"
-                    );
-
-            }
         }
 
         public override string ToString()
