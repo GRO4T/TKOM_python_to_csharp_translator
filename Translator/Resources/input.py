@@ -1,2 +1,1 @@
-﻿def hello(arg: int) -> float:
-    x = 2
+﻿# var = 1

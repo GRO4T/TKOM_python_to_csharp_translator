@@ -201,5 +201,25 @@ namespace Tests
             Assert.Equal("arg", identifiers[1].Value.GetString());
             Assert.Equal("x", identifiers[2].Value.GetString());
         }
+
+        [Theory]
+        [InlineData("# var = 1", new TokenType[0])]
+        [InlineData("# var = 1\nvar2 = 2", new[] { Identifier, Assignment, IntConstant })]
+        [InlineData("var = 1 # some comment\n", new[] { Identifier, Assignment, IntConstant })]
+        public void IgnoreComments(string testString, TokenType[] expectedTokens)
+        {
+            Lexer lexer = new Lexer(new StringCharacterSource(testString));
+            Token token;
+            var tokens = new List<TokenType>();
+            while ((token = lexer.GetNextToken()).Type != End)
+            {
+                tokens.Add(token.Type); 
+            }
+            Assert.Equal(tokens.Count, expectedTokens.Length);
+            for (int i = 0; i < expectedTokens.Length; i++)
+            {
+                Assert.Equal(tokens[i], expectedTokens[i]);
+            }
+        }
     }
 }

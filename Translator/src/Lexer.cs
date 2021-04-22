@@ -39,6 +39,8 @@ namespace Translator
             _tokenValue = new TokenValue();
             while (_lastCharacter == ' ')
                 GetChar();
+            if (_lastCharacter == '#')
+                SkipCommentLine();
             if (_sourceEnd)
                 return new Token.Token(End);
             if (char.IsDigit(_lastCharacter))
@@ -235,6 +237,13 @@ namespace Translator
                 default:
                     return GetCharAndReturnToken(Unknown);
             }
+        }
+
+        private void SkipCommentLine()
+        {
+            while (_lastCharacter != '\n' && !_sourceEnd) 
+                GetChar();
+            GetChar();
         }
     }
 }
