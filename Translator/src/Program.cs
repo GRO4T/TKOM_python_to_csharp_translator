@@ -21,7 +21,10 @@ namespace Translator
             Token.Token token = lexer.GetNextToken();
             while (token.Type != TokenType.End)
             {
-                Log.Information($"Parser fetched token: {token}");
+                if (token.Type == TokenType.Unknown)
+                    Log.Information($"Parser fetched token: {token} line:{token.LineNumber} column:{token.ColumnNumber}");
+                else
+                    Log.Information($"Parser fetched token: {token}");
                 token = lexer.GetNextToken();
             }
             Log.Information($"Parser fetched token: {token}");

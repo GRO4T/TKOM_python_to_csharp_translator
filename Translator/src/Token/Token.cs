@@ -9,6 +9,9 @@ namespace Translator.Token
         public TokenType Type { get; set; }
 
         public TokenValue Value { get; set; }
+        
+        public int LineNumber { get; set; }
+        public int ColumnNumber { get; set; }
 
         public Token()
         {
@@ -23,6 +26,13 @@ namespace Translator.Token
         {
             Type = type;
             Value = value;
+        }
+
+        public Token(TokenType type, int lineNumber, int columnNumber)
+        {
+            Type = type;
+            LineNumber = lineNumber;
+            ColumnNumber = columnNumber;
         }
 
         public override string ToString()

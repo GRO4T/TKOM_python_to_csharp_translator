@@ -61,7 +61,7 @@ namespace Translator
             while (_lastCharacter != '\"')
             {
                 if (_sourceEnd)
-                    return new Token.Token(Unknown);
+                    return TokenUnknown();
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar(); 
             }
@@ -78,7 +78,7 @@ namespace Translator
                     return ParseDecimalConstant();
                 if (NextToken())
                     return new Token.Token(IntConstant, new TokenValue(0));
-                return new Token.Token(Unknown);
+                return TokenUnknown();
             }
             return ParseIntegerConstant();
         }
@@ -93,7 +93,7 @@ namespace Translator
                 {
                     if (_lastCharacter == '.')
                         return ParseDecimalConstant();
-                    return new Token.Token(Unknown);
+                    return TokenUnknown();
                 }
             }
             return new Token.Token(IntConstant, _tokenValue);
@@ -109,7 +109,7 @@ namespace Translator
                 _tokenValue.AddDouble((_lastCharacter - '0') / Math.Pow(10.0, i++));
                 GetChar();
                 if (!char.IsDigit(_lastCharacter) && !NextToken())
-                    return new Token.Token(Unknown);
+                    return TokenUnknown();
             }
             return new Token.Token(DecimalConstant, _tokenValue);
         }
@@ -173,11 +173,11 @@ namespace Translator
         private Token.Token ParseIdentifier()
         {
             if (char.IsDigit(_lastCharacter))
-                return new Token.Token(Unknown);
+                return TokenUnknown();
             while (!NextToken())
             {
                 if (!char.IsLetter(_lastCharacter) && !char.IsDigit(_lastCharacter) && _lastCharacter != '_')
-                    return new Token.Token(Unknown);
+                    return TokenUnknown();
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
             }
@@ -187,7 +187,7 @@ namespace Translator
         private Token.Token GetCharAndReturnToken(TokenType tokenType)
         {
             GetChar();
-            return new Token.Token(tokenType);
+            return tokenType == Unknown ? TokenUnknown() : new Token.Token(tokenType);
         }
 
         private Token.Token? ParseSpecialCharacterSymbol()
@@ -233,17 +233,22 @@ namespace Translator
                     GetChar();
                     if (_lastCharacter == '\n')
                         return GetCharAndReturnToken(Newline);
-                    return new Token.Token(Unknown);
+                    return TokenUnknown();
                 default:
                     return GetCharAndReturnToken(Unknown);
             }
         }
-
+        
         private void SkipCommentLine()
         {
             while (_lastCharacter != '\n' && !_sourceEnd) 
                 GetChar();
             GetChar();
+        }
+
+        private Token.Token TokenUnknown()
+        {
+            return new(Unknown, _source.GetLineNumber(), _source.GetColumnNumber());
         }
     }
 }
