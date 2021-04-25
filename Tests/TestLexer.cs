@@ -12,10 +12,10 @@ namespace Tests
     {
         [Theory]
         [InlineData("", End)]
-        [InlineData("int", Int)]
-        [InlineData("str", TokenType.String)]
-        [InlineData("float", Float)]
-        [InlineData("bool", Bool)]
+        [InlineData("int", IntType)]
+        [InlineData("str", TokenType.StringType)]
+        [InlineData("float", FloatType)]
+        [InlineData("bool", BoolType)]
         [InlineData("(", LeftParenthesis)]
         [InlineData(")", RightParenthesis)]
         [InlineData(",", Comma)]
@@ -134,11 +134,11 @@ namespace Tests
     
         [Theory]
         [InlineData("test_integer = int(3)\n", 
-            new[]{Identifier, Assignment, Int, LeftParenthesis, IntConstant, RightParenthesis, Newline})]
+            new[]{Identifier, Assignment, IntType, LeftParenthesis, IntConstant, RightParenthesis, Newline})]
         [InlineData("def hello(arg: int) -> float:\n\tx = 1", 
             new[]
             {
-                Def, Identifier, LeftParenthesis, Identifier, Colon, Int, RightParenthesis, Arrow, Float, Colon,
+                Def, Identifier, LeftParenthesis, Identifier, Colon, IntType, RightParenthesis, Arrow, FloatType, Colon,
                 Newline, Indent, Identifier, Assignment, IntConstant 
             })]
         [InlineData("intValue = 1\n", new[]{Identifier, Assignment, IntConstant, Newline})]
@@ -166,8 +166,8 @@ namespace Tests
         })]
         [InlineData("Resources/function.py", new[]
         {
-            Def, Identifier, LeftParenthesis, Identifier, Colon, Int, RightParenthesis, Arrow,
-            Float, Colon, Newline, Identifier, Assignment, IntConstant 
+            Def, Identifier, LeftParenthesis, Identifier, Colon, IntType, RightParenthesis, Arrow,
+            FloatType, Colon, Newline, Identifier, Assignment, IntConstant 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {

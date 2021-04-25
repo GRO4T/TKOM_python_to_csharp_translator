@@ -1,0 +1,46 @@
+newline ::= "\n"
+tab ::= "\t"
+
+identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
+type ::= "int" | "float" | "string" | "bool"
+digit ::= [0-9]
+
+variable ::= identifier
+
+constant ::= ([1-9] digit*) | "0"
+logical_value ::= True | False
+string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
+value ::= constant | logical_value | string
+
+function_arg ::= value | function_call | variable
+function_call ::= identifier "(" ((function_arg ",")* function_arg)? ")"
+
+comparison_operator ::= "<=" | "<" | ">=" | ">"
+equality_operator ::= "==" | "!="
+
+logical_formula ::= 
+	(variable equality_operator (string | constant | logical_value | function_call)) |
+    (function_call equality_operator (string | constant | logical_value | function_call)) |
+    ((constant | variable | function_call) comparison_operator (constant | variable | function_call)) |
+    ((constant | logical_value) | (not? (variable | function_call)))
+logical_expression ::= 
+	"(" (logical_expression | (logical_expression ("and" | "or") logical_expression)) ")"
+
+if_statement ::= "if" logical_expression ":" newline
+while_loop ::= "while" logical_expression ":" newline
+for_loop ::= "for" identifier "in" "range"
+    "(" (constant | variable | function_call) "," (constant | variable | function_call) ")" ":" newline
+
+function_def ::= 
+	"def" identifier "(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")"
+        ("->" type)? ":" newline
+assignment ::= 
+	variable "=" (value | variable | function_call | logical_expression) newline
+variable_def ::= 
+	identifier "=" type "(" ((function_arg ",")* function_arg)? ")" newline
+
+code_block ::= 
+	(
+		(assignment | variable_def) code_block?) | 
+		((if_statement | for_loop | while_loop | function_def) (tab code_block)+
+	)

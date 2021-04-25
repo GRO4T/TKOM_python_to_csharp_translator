@@ -28,9 +28,10 @@ namespace Translator.Token
             Value = value;
         }
 
-        public Token(TokenType type, int lineNumber, int columnNumber)
+        public Token(TokenType type, TokenValue value, int lineNumber, int columnNumber)
         {
             Type = type;
+            Value = value;
             LineNumber = lineNumber;
             ColumnNumber = columnNumber;
         }

@@ -42,7 +42,7 @@ namespace Translator
             if (_lastCharacter == '#')
                 SkipCommentLine();
             if (_sourceEnd)
-                return new Token.Token(End);
+                return CreateToken(End);
             if (char.IsDigit(_lastCharacter))
                 return ParseNumericConstant();
             if (_lastCharacter == '"')
@@ -61,11 +61,11 @@ namespace Translator
             while (_lastCharacter != '\"')
             {
                 if (_sourceEnd)
-                    return TokenUnknown();
+                    return CreateToken(Unknown);
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar(); 
             }
-            return new Token.Token(StringLiteral, _tokenValue);
+            return CreateToken(StringLiteral, _tokenValue);
         }
 
         private Token.Token ParseNumericConstant()
@@ -77,8 +77,8 @@ namespace Translator
                 if (_lastCharacter == '.')
                     return ParseDecimalConstant();
                 if (NextToken())
-                    return new Token.Token(IntConstant, new TokenValue(0));
-                return TokenUnknown();
+                    return CreateToken(IntConstant, new TokenValue(0));
+                return CreateToken(Unknown);
             }
             return ParseIntegerConstant();
         }
@@ -93,10 +93,10 @@ namespace Translator
                 {
                     if (_lastCharacter == '.')
                         return ParseDecimalConstant();
-                    return TokenUnknown();
+                    return CreateToken(Unknown);
                 }
             }
-            return new Token.Token(IntConstant, _tokenValue);
+            return CreateToken(IntConstant, _tokenValue);
         }
 
         private Token.Token ParseDecimalConstant()
@@ -109,9 +109,9 @@ namespace Translator
                 _tokenValue.AddDouble((_lastCharacter - '0') / Math.Pow(10.0, i++));
                 GetChar();
                 if (!char.IsDigit(_lastCharacter) && !NextToken())
-                    return TokenUnknown();
+                    return CreateToken(Unknown);
             }
-            return new Token.Token(DecimalConstant, _tokenValue);
+            return CreateToken(DecimalConstant, _tokenValue);
         }
 
         private Token.Token ParseIdentifierOrWordTokenOrLogicalConstant()
@@ -122,36 +122,36 @@ namespace Translator
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
                     if (_lastCharacter == 'f')
-                        return TryParseSequence("f") ? new Token.Token(If) : ParseIdentifier();
+                        return TryParseSequence("f") ? CreateToken(If) : ParseIdentifier();
                     else
-                        return TryParseSequence("nt") ? new Token.Token(Int) : ParseIdentifier();
+                        return TryParseSequence("nt") ? CreateToken(IntType) : ParseIdentifier();
                 case 'f':
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
                     if (_lastCharacter == 'l')
-                        return TryParseSequence("loat") ? new Token.Token(Float) : ParseIdentifier();
+                        return TryParseSequence("loat") ? CreateToken(FloatType) : ParseIdentifier();
                     else
-                        return TryParseSequence("or") ? new Token.Token(For) : ParseIdentifier();
-                case 'F':
-                    return TryParseSequence("False") ? new Token.Token(LogicalConstant, new TokenValue(false)) : ParseIdentifier();
+                        return TryParseSequence("or") ? CreateToken(For) : ParseIdentifier();
                 case 'r':
-                    return TryParseSequence("return") ? new Token.Token(Return) : ParseIdentifier();
+                    return TryParseSequence("return") ? CreateToken(Return) : ParseIdentifier();
                 case 's':
-                    return TryParseSequence("str") ? new Token.Token(TokenType.String) : ParseIdentifier();
+                    return TryParseSequence("str") ? CreateToken(StringType) : ParseIdentifier();
                 case 'b':
-                    return TryParseSequence("bool") ? new Token.Token(Bool) : ParseIdentifier();
+                    return TryParseSequence("bool") ? CreateToken(BoolType) : ParseIdentifier();
                 case 'd':
-                    return TryParseSequence("def") ? new Token.Token(Def) : ParseIdentifier();
+                    return TryParseSequence("def") ? CreateToken(Def) : ParseIdentifier();
                 case 'n':
-                    return TryParseSequence("not") ? new Token.Token(Not) : ParseIdentifier();
+                    return TryParseSequence("not") ? CreateToken(Not) : ParseIdentifier();
                 case 'o':
-                    return TryParseSequence("or") ? new Token.Token(Or) : ParseIdentifier();
+                    return TryParseSequence("or") ? CreateToken(Or) : ParseIdentifier();
                 case 'a':
-                    return TryParseSequence("and") ? new Token.Token(And) : ParseIdentifier();
+                    return TryParseSequence("and") ? CreateToken(And) : ParseIdentifier();
                 case 'w':
-                    return TryParseSequence("while") ? new Token.Token(While) : ParseIdentifier();
+                    return TryParseSequence("while") ? CreateToken(While) : ParseIdentifier();
                 case 'T':
-                    return TryParseSequence("True") ? new Token.Token(LogicalConstant, new TokenValue(true)) : ParseIdentifier();
+                    return TryParseSequence("True") ? CreateToken(LogicalConstant, new TokenValue(true)) : ParseIdentifier();
+                case 'F':
+                    return TryParseSequence("False") ? CreateToken(LogicalConstant, new TokenValue(false)) : ParseIdentifier();
                 default:
                     return ParseIdentifier();
             }
@@ -173,21 +173,22 @@ namespace Translator
         private Token.Token ParseIdentifier()
         {
             if (char.IsDigit(_lastCharacter))
-                return TokenUnknown();
+                return CreateToken(Unknown);
             while (!NextToken())
             {
                 if (!char.IsLetter(_lastCharacter) && !char.IsDigit(_lastCharacter) && _lastCharacter != '_')
-                    return TokenUnknown();
+                    return CreateToken(Unknown);
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
             }
-            return new Token.Token(Identifier, _tokenValue);
+
+            return CreateToken(Identifier, _tokenValue);
         }
 
         private Token.Token GetCharAndReturnToken(TokenType tokenType)
         {
             GetChar();
-            return tokenType == Unknown ? TokenUnknown() : new Token.Token(tokenType);
+            return CreateToken(tokenType);
         }
 
         private Token.Token? ParseSpecialCharacterSymbol()
@@ -213,13 +214,13 @@ namespace Translator
                     return GetCharAndReturnToken(Slash);
                 case '=':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(TokenType.Equals) : new Token.Token(Assignment);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(TokenType.Equals) : CreateToken(Assignment);
                 case '<':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(LessEqualThan) : new Token.Token(LessThan);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(LessEqualThan) : CreateToken(LessThan);
                 case '>':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(GreaterEqualThan) : new Token.Token(GreaterThan);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(GreaterEqualThan) : CreateToken(GreaterThan);
                 case '!':
                     GetChar();
                     return _lastCharacter == '='
@@ -233,7 +234,7 @@ namespace Translator
                     GetChar();
                     if (_lastCharacter == '\n')
                         return GetCharAndReturnToken(Newline);
-                    return TokenUnknown();
+                    return CreateToken(Unknown);
                 default:
                     return GetCharAndReturnToken(Unknown);
             }
@@ -246,9 +247,9 @@ namespace Translator
             GetChar();
         }
 
-        private Token.Token TokenUnknown()
+        private Token.Token CreateToken(TokenType type, TokenValue value = null)
         {
-            return new(Unknown, _source.GetLineNumber(), _source.GetColumnNumber());
+            return new(type, value, _source.GetLineNumber(), _source.GetColumnNumber() - 1);
         }
     }
 }

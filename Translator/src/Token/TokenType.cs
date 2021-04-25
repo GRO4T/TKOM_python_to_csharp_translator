@@ -7,10 +7,10 @@
         End,
         Identifier,
         
-        Int,
-        String,
-        Bool,
-        Float,
+        IntType,
+        StringType,
+        BoolType,
+        FloatType,
         
         Assignment,
         Colon,
