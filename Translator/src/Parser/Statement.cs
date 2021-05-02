@@ -1,16 +1,33 @@
-﻿namespace PythonCSharpTranslator 
+﻿using System.Collections.Generic;
+
+namespace PythonCSharpTranslator 
 {
+    public enum StatementType
+    {
+        FunctionCall,
+        IfStatement,
+        WhileLoop,
+        ForLoop,
+        FunctionDef,
+        AssignmentStatement,
+        VariableDef,
+        UnknownStatement
+    }
+    
     public class Statement
     {
-        public enum Type
+
+        public StatementType Type;
+        public List<Token> Tokens;
+        
+        public override string ToString()
         {
-            FunctionCall,
-            IfStatement,
-            WhileLoop,
-            ForLoop,
-            FunctionDef,
-            AssignmentStatement,
-            VariableDef,
+            string tokenStrings = "";
+            Tokens.ForEach(delegate(Token token)
+            {
+                tokenStrings += token.ToString() + ", ";
+            });
+            return $"{Type}:( {tokenStrings} )";
         }
     }
 }

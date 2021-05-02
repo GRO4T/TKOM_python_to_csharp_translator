@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Translator;
-using Translator.CharacterSource;
-using Translator.Lexer;
-using Translator.Lexer.Token;
+﻿using System.Collections.Generic;
+using PythonCSharpTranslator;
 using Xunit;
-using static Translator.Lexer.Token.TokenType;
+using static PythonCSharpTranslator.TokenType;
 
 namespace Tests
 {
@@ -14,7 +10,7 @@ namespace Tests
         [Theory]
         [InlineData("", End)]
         [InlineData("int", IntegerType)]
-        [InlineData("str", TokenType.StringType)]
+        [InlineData("str", StringType)]
         [InlineData("float", DecimalType)]
         [InlineData("bool", BooleanType)]
         [InlineData("(", LeftParenthesis)]

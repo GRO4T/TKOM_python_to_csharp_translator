@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using System.Diagnostics;
+using Serilog;
 
 namespace PythonCSharpTranslator 
 {
@@ -17,6 +18,11 @@ namespace PythonCSharpTranslator
             ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
             // Parser parser(lexer);
             Parser parser = new Parser(lexer);
+            while (!parser.SourceEnd)
+            {
+                Statement s = parser.GetNextStatement();
+                Log.Information($"Fetched statement: {s}");
+            }
 
             Log.CloseAndFlush();
         }
