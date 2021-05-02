@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Translator
+namespace PythonCSharpTranslator 
 {
     public class FileCharacterSource : ICharacterSource
     {

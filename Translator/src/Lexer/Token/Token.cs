@@ -1,8 +1,5 @@
-﻿using System;
-using PythonCSharpTranslator;
-using PythonCSharpTranslator.Exception;
-
-namespace Translator.Token
+﻿
+namespace PythonCSharpTranslator
 {
     public class Token
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Translator.Token
+namespace PythonCSharpTranslator 
 {
     public class TokenValue
     {

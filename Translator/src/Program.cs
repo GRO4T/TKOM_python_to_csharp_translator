@@ -1,9 +1,6 @@
-﻿using PythonCSharpTranslator;
-using Serilog;
-using Translator.CharacterSource;
-using Translator.Token;
+﻿using Serilog;
 
-namespace Translator
+namespace PythonCSharpTranslator 
 {
     internal static class Program
     {
@@ -17,14 +14,9 @@ namespace Translator
 
             // Lexer lexer = new Lexer(new StringCharacterSource("test_integer = int(3)"));
             // Lexer lexer = new Lexer(new StringCharacterSource("intValue = 1"));
-            Lexer lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
-            Token.Token token = lexer.GetNextToken();
-            while (token.Type != TokenType.End)
-            {
-                Log.Information($"Parser fetched token: {token} line:{token.LineNumber} column:{token.ColumnNumber}");
-                token = lexer.GetNextToken();
-            }
-            Log.Information($"Parser fetched token: {token} line:{token.LineNumber} column:{token.ColumnNumber}");
+            ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
+            // Parser parser(lexer);
+            Parser parser = new Parser(lexer);
 
             Log.CloseAndFlush();
         }

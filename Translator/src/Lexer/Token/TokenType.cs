@@ -1,4 +1,4 @@
-﻿namespace Translator.Token
+﻿namespace PythonCSharpTranslator 
 {
     public enum TokenType
     {
@@ -7,10 +7,10 @@
         End,
         Identifier,
         
-        IntType,
+        IntegerType,
         StringType,
-        BoolType,
-        FloatType,
+        BooleanType,
+        DecimalType,
         
         Assignment,
         Colon,
@@ -43,7 +43,7 @@
         
         LogicalConstant,
         DecimalConstant,
-        IntConstant,
+        IntegerConstant,
         StringLiteral,
         
         Unknown

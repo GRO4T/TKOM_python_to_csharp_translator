@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using Translator;
 using Translator.CharacterSource;
-using Translator.Token;
+using Translator.Lexer;
+using Translator.Lexer.Token;
 using Xunit;
-using static Translator.Token.TokenType;
+using static Translator.Lexer.Token.TokenType;
 
 namespace Tests
 {
@@ -12,10 +13,10 @@ namespace Tests
     {
         [Theory]
         [InlineData("", End)]
-        [InlineData("int", IntType)]
+        [InlineData("int", IntegerType)]
         [InlineData("str", TokenType.StringType)]
-        [InlineData("float", FloatType)]
-        [InlineData("bool", BoolType)]
+        [InlineData("float", DecimalType)]
+        [InlineData("bool", BooleanType)]
         [InlineData("(", LeftParenthesis)]
         [InlineData(")", RightParenthesis)]
         [InlineData(",", Comma)]
@@ -109,7 +110,7 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(IntConstant, token.Type);
+            Assert.Equal(IntegerConstant, token.Type);
             Assert.Equal(expectedValue, token.Value.GetInt());
         }
 
@@ -134,14 +135,14 @@ namespace Tests
     
         [Theory]
         [InlineData("test_integer = int(3)\n", 
-            new[]{Identifier, Assignment, IntType, LeftParenthesis, IntConstant, RightParenthesis, Newline})]
+            new[]{Identifier, Assignment, IntegerType, LeftParenthesis, IntegerConstant, RightParenthesis, Newline})]
         [InlineData("def hello(arg: int) -> float:\n\tx = 1", 
             new[]
             {
-                Def, Identifier, LeftParenthesis, Identifier, Colon, IntType, RightParenthesis, Arrow, FloatType, Colon,
-                Newline, Indent, Identifier, Assignment, IntConstant 
+                Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow, DecimalType, Colon,
+                Newline, Indent, Identifier, Assignment, IntegerConstant 
             })]
-        [InlineData("intValue = 1\n", new[]{Identifier, Assignment, IntConstant, Newline})]
+        [InlineData("intValue = 1\n", new[]{Identifier, Assignment, IntegerConstant, Newline})]
         public void ParseStatement(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -161,13 +162,13 @@ namespace Tests
         [Theory]
         [InlineData("Resources/int_value_then_float_value.py", new[]
         {
-            Identifier, Assignment, IntConstant, Newline,
+            Identifier, Assignment, IntegerConstant, Newline,
             Identifier, Assignment, DecimalConstant
         })]
         [InlineData("Resources/function.py", new[]
         {
-            Def, Identifier, LeftParenthesis, Identifier, Colon, IntType, RightParenthesis, Arrow,
-            FloatType, Colon, Newline, Identifier, Assignment, IntConstant 
+            Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow,
+            DecimalType, Colon, Newline, Identifier, Assignment, IntegerConstant 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {
@@ -204,8 +205,8 @@ namespace Tests
 
         [Theory]
         [InlineData("# var = 1", new TokenType[0])]
-        [InlineData("# var = 1\nvar2 = 2", new[] { Identifier, Assignment, IntConstant })]
-        [InlineData("var = 1 # some comment\n", new[] { Identifier, Assignment, IntConstant })]
+        [InlineData("# var = 1\nvar2 = 2", new[] { Identifier, Assignment, IntegerConstant })]
+        [InlineData("var = 1 # some comment\n", new[] { Identifier, Assignment, IntegerConstant })]
         public void IgnoreComments(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));

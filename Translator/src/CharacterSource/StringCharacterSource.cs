@@ -1,4 +1,4 @@
-﻿namespace Translator.CharacterSource
+﻿namespace PythonCSharpTranslator 
 {
     public class StringCharacterSource : ICharacterSource
     {
