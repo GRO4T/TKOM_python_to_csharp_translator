@@ -5,7 +5,7 @@ using static Translator.Token.TokenType;
 
 namespace Translator
 {
-    public class Lexer
+    public class Lexer : ITokenSource
     {
         private readonly ICharacterSource _source;
         private char _lastCharacter;
@@ -27,7 +27,7 @@ namespace Translator
             _lastCharacter = c.GetValueOrDefault();
         }
 
-        private bool NextToken()
+        private bool NextTokenSymbol()
         {
             return _sourceEnd ||_lastCharacter == ' ' || _lastCharacter == '\n'
                    || _lastCharacter == '(' || _lastCharacter == ')' || _lastCharacter == ':'
@@ -76,7 +76,7 @@ namespace Translator
                 GetChar();
                 if (_lastCharacter == '.')
                     return ParseDecimalConstant();
-                if (NextToken())
+                if (NextTokenSymbol())
                     return CreateToken(IntConstant, new TokenValue(0));
                 return CreateToken(Unknown);
             }
@@ -85,11 +85,11 @@ namespace Translator
 
         private Token.Token ParseIntegerConstant()
         {
-            while (!NextToken())
+            while (!NextTokenSymbol())
             {
                 _tokenValue.SetInt(_tokenValue.GetInt() * 10 + (_lastCharacter - '0'));
                 GetChar();
-                if (!char.IsDigit(_lastCharacter) && !NextToken())
+                if (!char.IsDigit(_lastCharacter) && !NextTokenSymbol())
                 {
                     if (_lastCharacter == '.')
                         return ParseDecimalConstant();
@@ -104,11 +104,11 @@ namespace Translator
             _tokenValue.ConvertToDouble();
             GetChar();
             int i = 1;
-            while (!NextToken())
+            while (!NextTokenSymbol())
             {
                 _tokenValue.AddDouble((_lastCharacter - '0') / Math.Pow(10.0, i++));
                 GetChar();
-                if (!char.IsDigit(_lastCharacter) && !NextToken())
+                if (!char.IsDigit(_lastCharacter) && !NextTokenSymbol())
                     return CreateToken(Unknown);
             }
             return CreateToken(DecimalConstant, _tokenValue);
@@ -163,18 +163,18 @@ namespace Translator
             {
                 if (_lastCharacter != character)
                     return false;
-                if (!NextToken())
+                if (!NextTokenSymbol())
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
             }
-            return NextToken();
+            return NextTokenSymbol();
         }
 
         private Token.Token ParseIdentifier()
         {
             if (char.IsDigit(_lastCharacter))
                 return CreateToken(Unknown);
-            while (!NextToken())
+            while (!NextTokenSymbol())
             {
                 if (!char.IsLetter(_lastCharacter) && !char.IsDigit(_lastCharacter) && _lastCharacter != '_')
                     return CreateToken(Unknown);
