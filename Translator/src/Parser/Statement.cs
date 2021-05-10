@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace PythonCSharpTranslator 
 {
@@ -9,8 +11,8 @@ namespace PythonCSharpTranslator
         WhileLoop,
         ForLoop,
         FunctionDef,
-        AssignmentStatement,
-        VariableDef,
+        AssignmentStatementType,
+        VariableDefType,
         UnknownStatement
     }
     
@@ -18,7 +20,7 @@ namespace PythonCSharpTranslator
     {
 
         public StatementType Type;
-        public List<Token> Tokens;
+        public List<Token> Tokens = new();
         
         public override string ToString()
         {
@@ -29,5 +31,41 @@ namespace PythonCSharpTranslator
             });
             return $"{Type}:( {tokenStrings} )";
         }
+    }
+
+    public class AssignmentStatement : Statement
+    {
+        public AssignmentStatement()
+        {
+            Type = StatementType.AssignmentStatementType;
+        }
+    
+        public Token LeftSide;
+        public Token RightSide;
+    }
+
+    public class VariableDef : Statement
+    {
+        public VariableDef()
+        {
+            Type = StatementType.VariableDefType;
+        }
+        
+        public Token LeftSide;
+        public Token RightSide;
+        public TokenType VariableType;
+    }
+
+    public class FunCall : Statement
+    {
+        public FunCall()
+        {
+            Type = StatementType.FunctionCall;
+        }
+
+        public String Name;
+        public TokenType ReturnType;
+
+        public List<Token> Args = new();
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Serilog;
+using static PythonCSharpTranslator.TokenType;
 
 namespace PythonCSharpTranslator 
 {
@@ -15,13 +17,25 @@ namespace PythonCSharpTranslator
 
             // Lexer lexer = new Lexer(new StringCharacterSource("test_integer = int(3)"));
             // Lexer lexer = new Lexer(new StringCharacterSource("intValue = 1"));
-            ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
+            // ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
             // Parser parser(lexer);
-            Parser parser = new Parser(lexer);
+            // Parser parser = new Parser(lexer);
+            TokenType[] tokens = new[]
+                {Identifier, LeftParenthesis, Identifier, Comma, DecimalConstant, RightParenthesis };
+            List<Token> l = new(); 
+            foreach (var t in tokens)
+            {
+                l.Add(new Token(t));
+            }
+
+            l[0].Value = new TokenValue("hello");
+
+            Parser parser = new Parser(new TokenSourceMock(l));
             while (!parser.SourceEnd)
             {
                 Statement s = parser.GetNextStatement();
                 Log.Information($"Fetched statement: {s}");
+                var f = (FunCall) s;
             }
 
             Log.CloseAndFlush();

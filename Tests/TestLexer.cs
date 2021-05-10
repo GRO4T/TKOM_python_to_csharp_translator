@@ -39,6 +39,7 @@ namespace Tests
         [InlineData("\n", Newline)]
         [InlineData("\t", Indent)]
         [InlineData("->", Arrow)]
+        [InlineData("a", Identifier)]
         public void ParseSingleTypeOnlyToken(string testString, TokenType expectedToken)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));

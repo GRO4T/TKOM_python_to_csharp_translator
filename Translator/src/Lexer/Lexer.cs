@@ -30,7 +30,7 @@ namespace PythonCSharpTranslator
         {
             return _sourceEnd ||_lastCharacter == ' ' || _lastCharacter == '\n'
                    || _lastCharacter == '(' || _lastCharacter == ')' || _lastCharacter == ':'
-                   || _lastCharacter == '\r';
+                   || _lastCharacter == '\r' || _lastCharacter == ',';
         }
 
         public Token GetNextToken()
