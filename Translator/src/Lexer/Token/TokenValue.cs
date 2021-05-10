@@ -19,6 +19,11 @@ namespace PythonCSharpTranslator
             SetBool(value);
         }
 
+        public TokenValue(string value)
+        {
+            SetString(value);
+        }
+
         public int GetInt()
         {
             return (int) Value;

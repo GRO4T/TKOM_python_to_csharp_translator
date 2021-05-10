@@ -17,7 +17,7 @@ namespace Tests
         [InlineData(")", RightParenthesis)]
         [InlineData(",", Comma)]
         [InlineData(":", Colon)]
-        [InlineData("=", Assignment)]
+        [InlineData("=", AssignmentSymbol)]
         [InlineData("+", Plus)]
         [InlineData("-", Minus)]
         [InlineData("*", Star)]
@@ -25,8 +25,8 @@ namespace Tests
         [InlineData("return", Return)]
         [InlineData("<", LessThan)]
         [InlineData(">", GreaterThan)]
-        [InlineData("==", TokenType.Equals)]
-        [InlineData("!=", NotEquals)]
+        [InlineData("==", EqualSymbol)]
+        [InlineData("!=", NotEqualSymbol)]
         [InlineData("<=", LessEqualThan)]
         [InlineData(">=", GreaterEqualThan)]
         [InlineData("not", Not)]
@@ -131,14 +131,14 @@ namespace Tests
     
         [Theory]
         [InlineData("test_integer = int(3)\n", 
-            new[]{Identifier, Assignment, IntegerType, LeftParenthesis, IntegerConstant, RightParenthesis, Newline})]
+            new[]{Identifier, AssignmentSymbol, IntegerType, LeftParenthesis, IntegerConstant, RightParenthesis, Newline})]
         [InlineData("def hello(arg: int) -> float:\n\tx = 1", 
             new[]
             {
                 Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow, DecimalType, Colon,
-                Newline, Indent, Identifier, Assignment, IntegerConstant 
+                Newline, Indent, Identifier, AssignmentSymbol, IntegerConstant 
             })]
-        [InlineData("intValue = 1\n", new[]{Identifier, Assignment, IntegerConstant, Newline})]
+        [InlineData("intValue = 1\n", new[]{Identifier, AssignmentSymbol, IntegerConstant, Newline})]
         public void ParseStatement(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -158,13 +158,13 @@ namespace Tests
         [Theory]
         [InlineData("Resources/int_value_then_float_value.py", new[]
         {
-            Identifier, Assignment, IntegerConstant, Newline,
-            Identifier, Assignment, DecimalConstant
+            Identifier, AssignmentSymbol, IntegerConstant, Newline,
+            Identifier, AssignmentSymbol, DecimalConstant
         })]
         [InlineData("Resources/function.py", new[]
         {
             Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow,
-            DecimalType, Colon, Newline, Identifier, Assignment, IntegerConstant 
+            DecimalType, Colon, Newline, Identifier, AssignmentSymbol, IntegerConstant 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {
@@ -201,8 +201,8 @@ namespace Tests
 
         [Theory]
         [InlineData("# var = 1", new TokenType[0])]
-        [InlineData("# var = 1\nvar2 = 2", new[] { Identifier, Assignment, IntegerConstant })]
-        [InlineData("var = 1 # some comment\n", new[] { Identifier, Assignment, IntegerConstant })]
+        [InlineData("# var = 1\nvar2 = 2", new[] { Identifier, AssignmentSymbol, IntegerConstant })]
+        [InlineData("var = 1 # some comment\n", new[] { Identifier, AssignmentSymbol, IntegerConstant })]
         public void IgnoreComments(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));

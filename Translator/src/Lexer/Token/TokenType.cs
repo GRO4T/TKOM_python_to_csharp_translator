@@ -12,7 +12,7 @@
         BooleanType,
         DecimalType,
         
-        Assignment,
+        AssignmentSymbol,
         Colon,
         Comma,
         LeftParenthesis,
@@ -27,8 +27,8 @@
         
         LessThan,
         GreaterThan,
-        Equals,
-        NotEquals,
+        EqualSymbol,
+        NotEqualSymbol,
         LessEqualThan,
         GreaterEqualThan,
         

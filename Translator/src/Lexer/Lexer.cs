@@ -213,7 +213,7 @@ namespace PythonCSharpTranslator
                     return GetCharAndReturnToken(Slash);
                 case '=':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(TokenType.Equals) : CreateToken(Assignment);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(TokenType.EqualSymbol) : CreateToken(AssignmentSymbol);
                 case '<':
                     GetChar();
                     return _lastCharacter == '=' ? GetCharAndReturnToken(LessEqualThan) : CreateToken(LessThan);
@@ -223,7 +223,7 @@ namespace PythonCSharpTranslator
                 case '!':
                     GetChar();
                     return _lastCharacter == '='
-                        ? GetCharAndReturnToken(NotEquals)
+                        ? GetCharAndReturnToken(NotEqualSymbol)
                         : GetCharAndReturnToken(Unknown);
                 case '\t':
                     return GetCharAndReturnToken(Indent);

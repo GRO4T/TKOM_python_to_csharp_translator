@@ -1,17 +1,19 @@
-﻿namespace PythonCSharpTranslator
+﻿using System.Collections.Generic;
+
+namespace PythonCSharpTranslator
 {
     public class TokenSourceMock : ITokenSource
     {
-        private Token[] _tokens;
+        private List<Token> _tokens;
         private int _currTokenIndex = 0;
 
-        TokenSourceMock(Token[] tokens)
+        public TokenSourceMock(List<Token> tokens)
         {
             _tokens = tokens; 
         }
         public Token GetNextToken()
         {
-            return _currTokenIndex < _tokens.Length ? _tokens[_currTokenIndex++] : new Token(TokenType.End);
+            return _currTokenIndex < _tokens.Count ? _tokens[_currTokenIndex++] : new Token(TokenType.End);
         }
         
     }
