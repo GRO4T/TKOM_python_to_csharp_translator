@@ -13,23 +13,17 @@ namespace PythonCSharpTranslator
         FunctionDef,
         AssignmentStatementType,
         VariableDefType,
-        UnknownStatement
+        BadStatementType
     }
     
     public class Statement
     {
 
         public StatementType Type;
-        public List<Token> Tokens = new();
         
         public override string ToString()
         {
-            string tokenStrings = "";
-            Tokens.ForEach(delegate(Token token)
-            {
-                tokenStrings += token.ToString() + ", ";
-            });
-            return $"{Type}:( {tokenStrings} )";
+            return $"{Type}";
         }
     }
 
@@ -41,7 +35,7 @@ namespace PythonCSharpTranslator
         }
     
         public Token LeftSide;
-        public Token RightSide;
+        public RValue RightSide;
     }
 
     public class VariableDef : Statement
@@ -67,5 +61,15 @@ namespace PythonCSharpTranslator
         public TokenType ReturnType;
 
         public List<Token> Args = new();
+    }
+
+    public class BadStatement : Statement
+    {
+        public BadStatement()
+        {
+            Type = StatementType.BadStatementType;
+        }
+    
+        public Token BadToken;
     }
 }

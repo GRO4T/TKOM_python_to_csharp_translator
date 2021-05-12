@@ -14,7 +14,7 @@ string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
 value ::= 
 	integerConstant | decimalConstant | logicalConstant | string
 
-parameter ::= value | function_call | identifier
+parameter ::= value | identifier
 
 logicalFormula ::= 
 	(parameter comparison_operator parameter) | (not? parameter)

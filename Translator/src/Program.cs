@@ -20,22 +20,25 @@ namespace PythonCSharpTranslator
             // ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
             // Parser parser(lexer);
             // Parser parser = new Parser(lexer);
-            TokenType[] tokens = new[]
-                {Identifier, LeftParenthesis, Identifier, Comma, DecimalConstant, RightParenthesis };
-            List<Token> l = new(); 
-            foreach (var t in tokens)
-            {
-                l.Add(new Token(t));
-            }
+            
+            // TokenType[] tokens = new[]
+            //     {Identifier, LeftParenthesis, Identifier, Comma, DecimalConstant, RightParenthesis };
+            // List<Token> l = new(); 
+            // foreach (var t in tokens)
+            // {
+            //     l.Add(new Token(t));
+            // }
+            //
+            //
+            // l[0].Value = new TokenValue("hello");
+            //
+            // Parser parser = new Parser(new TokenSourceMock(l));
 
-            l[0].Value = new TokenValue("hello");
-
-            Parser parser = new Parser(new TokenSourceMock(l));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/logical_expression2.py")));
             while (!parser.SourceEnd)
             {
                 Statement s = parser.GetNextStatement();
                 Log.Information($"Fetched statement: {s}");
-                var f = (FunCall) s;
             }
 
             Log.CloseAndFlush();

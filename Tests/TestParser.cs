@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using PythonCSharpTranslator;
 using Xunit;
 using static PythonCSharpTranslator.StatementType;
 using static PythonCSharpTranslator.TokenType;
-using static PythonCSharpTranslator.TokenValue;
 
 namespace Tests
 {
@@ -27,7 +24,7 @@ namespace Tests
             }
             var parser = new Parser(new TokenSourceMock(tokens));
             var s = parser.GetNextStatement();
-            Assert.Equal(s.Type, expectedStatement);
+            Assert.Equal(expectedStatement, s.Type);
         }
 
         [Fact]
@@ -44,7 +41,58 @@ namespace Tests
             Assert.Equal(s.Type, AssignmentStatementType);
             var assignStatement = (AssignmentStatement) s;
             Assert.Equal("hello", assignStatement.LeftSide.Value.GetString());
-            Assert.Equal(123, assignStatement.RightSide.Value.GetInt());
+            Assert.Equal(123, assignStatement.RightSide.GetValue().Value.GetInt());
+        }
+            
+        [Fact]
+        public void ParseAssignmentWithFunction()
+        {
+            var tokens = new List<Token>
+            {
+                new(Identifier, new TokenValue("hello")),
+                new(AssignmentSymbol),
+                new(Identifier, new TokenValue("hello_fun")),
+                new Token(LeftParenthesis),
+                new Token(RightParenthesis)
+            };
+            var parser = new Parser(new TokenSourceMock(tokens));
+            var s = parser.GetNextStatement();
+            Assert.Equal(s.Type, AssignmentStatementType);
+            var assignStatement = (AssignmentStatement) s;
+            Assert.Equal("hello", assignStatement.LeftSide.Value.GetString());
+            Assert.Equal("hello_fun", assignStatement.RightSide.GetFunCall().Name);
+        }
+    
+        [Theory]
+        [InlineData("Resources/logical_expression1.py")]
+        [InlineData("Resources/logical_expression2.py")]
+        [InlineData("Resources/logical_expression3.py")]
+        [InlineData("Resources/logical_expression4.py")]
+        public void ParseAssignmentWithLogicalExpression(string filename)
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
+            var s = parser.GetNextStatement();
+            Assert.Equal(AssignmentStatementType, s.Type);
+        }
+        
+        [Theory]
+        [InlineData("Resources/logical_expression_bad1.py")]
+        [InlineData("Resources/logical_expression_bad2.py")]
+        [InlineData("Resources/logical_expression_bad3.py")]
+        public void ParseAssignmentWithLogicalExpressionBad(string filename)
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
+            var s = parser.GetNextStatement();
+            Assert.Equal(BadStatementType, s.Type);
+        }
+        
+        [Theory]
+        [InlineData("Resources/if_statement.py")]
+        public void ParseIfStatement(string filename)
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
+            var s = parser.GetNextStatement();
+            Assert.Equal(IfStatement, s.Type);
         }
         
         [Fact]
@@ -90,5 +138,7 @@ namespace Tests
                 Assert.Equal(args[i], funCall.Args[i].Type);
             }
         }
+        
+        
     } 
 }
