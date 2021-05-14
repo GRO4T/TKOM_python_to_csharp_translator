@@ -165,7 +165,7 @@ namespace Tests
         [InlineData("Resources/function.py", new[]
         {
             Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow,
-            DecimalType, Colon, Newline, Identifier, AssignmentSymbol, IntegerConstant 
+            DecimalType, Colon, Newline, Indent, Identifier, AssignmentSymbol, IntegerConstant 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {
@@ -179,7 +179,7 @@ namespace Tests
             Assert.Equal(tokens.Count, expectedTokens.Length);
             for (int i = 0; i < expectedTokens.Length; i++)
             {
-                Assert.Equal(tokens[i], expectedTokens[i]);
+                Assert.Equal(expectedTokens[i], tokens[i]);
             }
         }
     

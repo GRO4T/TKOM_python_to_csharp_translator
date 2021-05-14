@@ -10,6 +10,9 @@ namespace PythonCSharpTranslator
         private char _lastCharacter;
         private bool _sourceEnd;
         private TokenValue _tokenValue;
+        private bool newline = false;
+        private const int indentWidth = 4;
+        private int indentCounter = 0;
 
         public Lexer(ICharacterSource characterSource)
         {
@@ -37,7 +40,19 @@ namespace PythonCSharpTranslator
         {
             _tokenValue = new TokenValue();
             while (_lastCharacter == ' ')
+            {
+                if (newline)
+                {
+                    indentCounter++;
+                    if (indentCounter == indentWidth)
+                    {
+                        indentCounter = 0;
+                        newline = false;
+                        return CreateToken(Indent);
+                    }
+                }
                 GetChar();
+            }
             if (_lastCharacter == '#')
                 SkipCommentLine();
             if (_sourceEnd)
@@ -228,11 +243,17 @@ namespace PythonCSharpTranslator
                 case '\t':
                     return GetCharAndReturnToken(Indent);
                 case '\n':
+                    indentCounter = 0;
+                    newline = true;
                     return GetCharAndReturnToken(Newline);
                 case '\r':
                     GetChar();
                     if (_lastCharacter == '\n')
+                    {
+                        indentCounter = 0;
+                        newline = true;
                         return GetCharAndReturnToken(Newline);
+                    }
                     return CreateToken(Unknown);
                 default:
                     return GetCharAndReturnToken(Unknown);

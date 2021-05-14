@@ -1,1 +1,2 @@
-﻿var = ((not x) and ((y) < (25)))
+﻿if (x) and (y):
+    x = 1

@@ -52,7 +52,26 @@ namespace PythonCSharpTranslator
                 GetToken();
                 if (!ParseLogicalExpression()) return CreateStatement(BadStatementType);
                 if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
-                return CreateStatement(IfStatement);
+                GetToken();
+                if (_lastToken.Type != Newline) return CreateStatement(BadStatementType);
+                GetToken();
+                if (_lastToken.Type != Indent) return CreateStatement(BadStatementType);
+                GetToken();
+                var s = GetNextStatement();
+                if (s.Type == BadStatementType)
+                    return s;
+                GetToken();
+                if (_lastToken.Type != Newline) return CreateStatement(BadStatementType);
+                while (true)
+                {
+                    GetToken();
+                    if (_lastToken.Type != Indent) return CreateStatement(IfStatement);
+                    s = GetNextStatement();
+                    if (s.Type == BadStatementType)
+                        return s;
+                    GetToken();
+                    if (_lastToken.Type != Newline) return CreateStatement(BadStatementType);
+                }
             }
             return null;
         }
