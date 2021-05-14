@@ -29,7 +29,7 @@ namespace PythonCSharpTranslator
             _lastCharacter = c.GetValueOrDefault();
         }
 
-        private bool NextTokenSymbol()
+        private bool IsTokenSeparator()
         {
             return _sourceEnd ||_lastCharacter == ' ' || _lastCharacter == '\n'
                    || _lastCharacter == '(' || _lastCharacter == ')' || _lastCharacter == ':'
@@ -48,7 +48,7 @@ namespace PythonCSharpTranslator
                     {
                         indentCounter = 0;
                         newline = false;
-                        return CreateToken(Indent);
+                        return CreateToken(TabToken);
                     }
                 }
                 GetChar();
@@ -75,7 +75,7 @@ namespace PythonCSharpTranslator
             while (_lastCharacter != '\"')
             {
                 if (_sourceEnd)
-                    return CreateToken(Unknown);
+                    return CreateToken(UnknownToken);
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar(); 
             }
@@ -90,24 +90,24 @@ namespace PythonCSharpTranslator
                 GetChar();
                 if (_lastCharacter == '.')
                     return ParseDecimalConstant();
-                if (NextTokenSymbol())
+                if (IsTokenSeparator())
                     return CreateToken(IntegerConstant, new TokenValue(0));
-                return CreateToken(Unknown);
+                return CreateToken(UnknownToken);
             }
             return ParseIntegerConstant();
         }
 
         private Token ParseIntegerConstant()
         {
-            while (!NextTokenSymbol())
+            while (!IsTokenSeparator())
             {
                 _tokenValue.SetInt(_tokenValue.GetInt() * 10 + (_lastCharacter - '0'));
                 GetChar();
-                if (!char.IsDigit(_lastCharacter) && !NextTokenSymbol())
+                if (!char.IsDigit(_lastCharacter) && !IsTokenSeparator())
                 {
                     if (_lastCharacter == '.')
                         return ParseDecimalConstant();
-                    return CreateToken(Unknown);
+                    return CreateToken(UnknownToken);
                 }
             }
             return CreateToken(IntegerConstant, _tokenValue);
@@ -118,12 +118,12 @@ namespace PythonCSharpTranslator
             _tokenValue.ConvertToDouble();
             GetChar();
             int i = 1;
-            while (!NextTokenSymbol())
+            while (!IsTokenSeparator())
             {
                 _tokenValue.AddDouble((_lastCharacter - '0') / Math.Pow(10.0, i++));
                 GetChar();
-                if (!char.IsDigit(_lastCharacter) && !NextTokenSymbol())
-                    return CreateToken(Unknown);
+                if (!char.IsDigit(_lastCharacter) && !IsTokenSeparator())
+                    return CreateToken(UnknownToken);
             }
             return CreateToken(DecimalConstant, _tokenValue);
         }
@@ -136,32 +136,45 @@ namespace PythonCSharpTranslator
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
                     if (_lastCharacter == 'f')
-                        return TryParseSequence("f") ? CreateToken(If) : ParseIdentifier();
-                    else
-                        return TryParseSequence("nt") ? CreateToken(IntegerType) : ParseIdentifier();
+                        return TryParseSequence("f") ? CreateToken(IfToken) : ParseIdentifier();
+                    else if (_lastCharacter == 'n')
+                    {
+                        GetChar();
+                        if (IsTokenSeparator())
+                            return CreateToken(InToken);
+                        if (_lastCharacter == 't')
+                        {
+                            GetChar();
+                            if (IsTokenSeparator())
+                                return CreateToken(IntToken);
+                        }
+                    }
+                    return ParseIdentifier();
                 case 'f':
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                     GetChar();
                     if (_lastCharacter == 'l')
-                        return TryParseSequence("loat") ? CreateToken(DecimalType) : ParseIdentifier();
-                    else
-                        return TryParseSequence("or") ? CreateToken(For) : ParseIdentifier();
+                        return TryParseSequence("loat") ? CreateToken(FloatToken) : ParseIdentifier();
+                    return TryParseSequence("or") ? CreateToken(ForToken) : ParseIdentifier();
                 case 'r':
-                    return TryParseSequence("return") ? CreateToken(Return) : ParseIdentifier();
+                    GetChar();
+                    if (_lastCharacter == 'a')
+                        return TryParseSequence("ange") ? CreateToken(RangeToken) : ParseIdentifier();
+                    return TryParseSequence("eturn") ? CreateToken(Return) : ParseIdentifier();
                 case 's':
-                    return TryParseSequence("str") ? CreateToken(StringType) : ParseIdentifier();
+                    return TryParseSequence("str") ? CreateToken(StrToken) : ParseIdentifier();
                 case 'b':
-                    return TryParseSequence("bool") ? CreateToken(BooleanType) : ParseIdentifier();
+                    return TryParseSequence("bool") ? CreateToken(BoolToken) : ParseIdentifier();
                 case 'd':
-                    return TryParseSequence("def") ? CreateToken(Def) : ParseIdentifier();
+                    return TryParseSequence("def") ? CreateToken(DefToken) : ParseIdentifier();
                 case 'n':
-                    return TryParseSequence("not") ? CreateToken(Not) : ParseIdentifier();
+                    return TryParseSequence("not") ? CreateToken(NotToken) : ParseIdentifier();
                 case 'o':
-                    return TryParseSequence("or") ? CreateToken(Or) : ParseIdentifier();
+                    return TryParseSequence("or") ? CreateToken(OrToken) : ParseIdentifier();
                 case 'a':
-                    return TryParseSequence("and") ? CreateToken(And) : ParseIdentifier();
+                    return TryParseSequence("and") ? CreateToken(AndToken) : ParseIdentifier();
                 case 'w':
-                    return TryParseSequence("while") ? CreateToken(While) : ParseIdentifier();
+                    return TryParseSequence("while") ? CreateToken(WhileToken) : ParseIdentifier();
                 case 'T':
                     return TryParseSequence("True") ? CreateToken(LogicalConstant, new TokenValue(true)) : ParseIdentifier();
                 case 'F':
@@ -177,21 +190,21 @@ namespace PythonCSharpTranslator
             {
                 if (_lastCharacter != character)
                     return false;
-                if (!NextTokenSymbol())
+                if (!IsTokenSeparator())
                     _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
             }
-            return NextTokenSymbol();
+            return IsTokenSeparator();
         }
 
         private Token ParseIdentifier()
         {
             if (char.IsDigit(_lastCharacter))
-                return CreateToken(Unknown);
-            while (!NextTokenSymbol())
+                return CreateToken(UnknownToken);
+            while (!IsTokenSeparator())
             {
                 if (!char.IsLetter(_lastCharacter) && !char.IsDigit(_lastCharacter) && _lastCharacter != '_')
-                    return CreateToken(Unknown);
+                    return CreateToken(UnknownToken);
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar();
             }
@@ -239,24 +252,24 @@ namespace PythonCSharpTranslator
                     GetChar();
                     return _lastCharacter == '='
                         ? GetCharAndReturnToken(NotEqualSymbol)
-                        : GetCharAndReturnToken(Unknown);
+                        : GetCharAndReturnToken(UnknownToken);
                 case '\t':
-                    return GetCharAndReturnToken(Indent);
+                    return GetCharAndReturnToken(TabToken);
                 case '\n':
                     indentCounter = 0;
                     newline = true;
-                    return GetCharAndReturnToken(Newline);
+                    return GetCharAndReturnToken(NewlineToken);
                 case '\r':
                     GetChar();
                     if (_lastCharacter == '\n')
                     {
                         indentCounter = 0;
                         newline = true;
-                        return GetCharAndReturnToken(Newline);
+                        return GetCharAndReturnToken(NewlineToken);
                     }
-                    return CreateToken(Unknown);
+                    return CreateToken(UnknownToken);
                 default:
-                    return GetCharAndReturnToken(Unknown);
+                    return GetCharAndReturnToken(UnknownToken);
             }
         }
         

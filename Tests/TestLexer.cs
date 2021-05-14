@@ -9,10 +9,10 @@ namespace Tests
     {
         [Theory]
         [InlineData("", End)]
-        [InlineData("int", IntegerType)]
-        [InlineData("str", StringType)]
-        [InlineData("float", DecimalType)]
-        [InlineData("bool", BooleanType)]
+        [InlineData("int", IntToken)]
+        [InlineData("str", StrToken)]
+        [InlineData("float", FloatToken)]
+        [InlineData("bool", BoolToken)]
         [InlineData("(", LeftParenthesis)]
         [InlineData(")", RightParenthesis)]
         [InlineData(",", Comma)]
@@ -29,17 +29,19 @@ namespace Tests
         [InlineData("!=", NotEqualSymbol)]
         [InlineData("<=", LessEqualThan)]
         [InlineData(">=", GreaterEqualThan)]
-        [InlineData("not", Not)]
-        [InlineData("and", And)]
-        [InlineData("or", Or)]
-        [InlineData("for", For)]
-        [InlineData("while", While)]
-        [InlineData("if", If)]
-        [InlineData("def", Def)]
-        [InlineData("\n", Newline)]
-        [InlineData("\t", Indent)]
+        [InlineData("not", NotToken)]
+        [InlineData("and", AndToken)]
+        [InlineData("or", OrToken)]
+        [InlineData("for", ForToken)]
+        [InlineData("while", WhileToken)]
+        [InlineData("if", IfToken)]
+        [InlineData("def", DefToken)]
+        [InlineData("\n", NewlineToken)]
+        [InlineData("\t", TabToken)]
         [InlineData("->", Arrow)]
         [InlineData("a", Identifier)]
+        [InlineData("in", InToken)]
+        [InlineData("range", RangeToken)]
         public void ParseSingleTypeOnlyToken(string testString, TokenType expectedToken)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -72,7 +74,7 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(identifier));
             Token token = lexer.GetNextToken();
-            Assert.Equal(Unknown, token.Type);
+            Assert.Equal(UnknownToken, token.Type);
         }
     
         [Theory]
@@ -127,19 +129,19 @@ namespace Tests
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
             Token token = lexer.GetNextToken();
-            Assert.Equal(Unknown, token.Type);
+            Assert.Equal(UnknownToken, token.Type);
         }
     
         [Theory]
         [InlineData("test_integer = int(3)\n", 
-            new[]{Identifier, AssignmentSymbol, IntegerType, LeftParenthesis, IntegerConstant, RightParenthesis, Newline})]
+            new[]{Identifier, AssignmentSymbol, IntToken, LeftParenthesis, IntegerConstant, RightParenthesis, NewlineToken})]
         [InlineData("def hello(arg: int) -> float:\n\tx = 1", 
             new[]
             {
-                Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow, DecimalType, Colon,
-                Newline, Indent, Identifier, AssignmentSymbol, IntegerConstant 
+                DefToken, Identifier, LeftParenthesis, Identifier, Colon, IntToken, RightParenthesis, Arrow, FloatToken, Colon,
+                NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant 
             })]
-        [InlineData("intValue = 1\n", new[]{Identifier, AssignmentSymbol, IntegerConstant, Newline})]
+        [InlineData("intValue = 1\n", new[]{Identifier, AssignmentSymbol, IntegerConstant, NewlineToken})]
         public void ParseStatement(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -159,13 +161,13 @@ namespace Tests
         [Theory]
         [InlineData("Resources/int_value_then_float_value.py", new[]
         {
-            Identifier, AssignmentSymbol, IntegerConstant, Newline,
+            Identifier, AssignmentSymbol, IntegerConstant, NewlineToken,
             Identifier, AssignmentSymbol, DecimalConstant
         })]
         [InlineData("Resources/function.py", new[]
         {
-            Def, Identifier, LeftParenthesis, Identifier, Colon, IntegerType, RightParenthesis, Arrow,
-            DecimalType, Colon, Newline, Indent, Identifier, AssignmentSymbol, IntegerConstant 
+            DefToken, Identifier, LeftParenthesis, Identifier, Colon, IntToken, RightParenthesis, Arrow,
+            FloatToken, Colon, NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {

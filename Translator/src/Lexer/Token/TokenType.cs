@@ -2,15 +2,15 @@
 {
     public enum TokenType
     {
-        Indent,
-        Newline,
+        TabToken,
+        NewlineToken,
         End,
         Identifier,
         
-        IntegerType,
-        StringType,
-        BooleanType,
-        DecimalType,
+        IntToken,
+        StrToken,
+        BoolToken,
+        FloatToken,
         
         AssignmentSymbol,
         Colon,
@@ -32,20 +32,22 @@
         LessEqualThan,
         GreaterEqualThan,
         
-        Not,
-        And,
-        Or,
+        NotToken,
+        AndToken,
+        OrToken,
         
-        For,
-        While,
-        If,
-        Def,
+        ForToken,
+        WhileToken,
+        IfToken,
+        DefToken,
+        InToken,
+        RangeToken,
         
         LogicalConstant,
         DecimalConstant,
         IntegerConstant,
         StringLiteral,
         
-        Unknown
+        UnknownToken
     }
 }
