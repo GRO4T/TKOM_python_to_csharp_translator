@@ -7,16 +7,16 @@ namespace PythonCSharpTranslator
     public enum StatementType
     {
         FunctionCallType,
-        IfStatement,
-        WhileLoop,
-        ForLoop,
+        IfStatementType,
+        WhileLoopType,
+        ForLoopType,
         FunctionDefType,
         AssignmentStatementType,
         VariableDefType,
         ReturnStatement,
         BadStatementType
     }
-    
+
     public class Statement
     {
 
@@ -48,8 +48,8 @@ namespace PythonCSharpTranslator
             Type = StatementType.AssignmentStatementType;
         }
     
-        public Token LeftSide;
-        public RValue RightSide;
+        public string LeftSide;
+        public RValue RightSide = new();
     }
 
     public class VariableDef : Statement
@@ -64,6 +64,17 @@ namespace PythonCSharpTranslator
         public TokenType VariableType;
     }
 
+    public class IfStatement : Statement
+    {
+        public IfStatement()
+        {
+            Type = StatementType.IfStatementType;
+        }
+
+        public List<Token> Condition = new();
+        public List<Statement> Statements = new();
+    }
+
     public class FunctionCall : Statement
     {
         public FunctionCall()
@@ -73,6 +84,19 @@ namespace PythonCSharpTranslator
 
         public String Name;
         public List<Token> Args = new();
+    }
+
+    public class ForLoop : Statement
+    {
+        public ForLoop()
+        {
+            Type = StatementType.ForLoopType;
+        }
+    
+        public String IteratorName;
+        public int Start;
+        public int End;
+        public List<Statement> Statements = new();
     }
 
     public class BadStatement : Statement

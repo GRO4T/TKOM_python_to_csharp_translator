@@ -1,34 +1,43 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace PythonCSharpTranslator
 {
     public class RValue
     {
+        public RValueType Type = RValueType.Undefined;
         private object _value;
-        public enum Type
+        public enum RValueType
         {
             FunCall,
-            Value
-        }
-
-        public RValue(FunctionCall functionCall)
-        {
-            SetFunCall(functionCall);
-        }
-
-        public RValue(Token value)
-        {
-            SetValue(value);
+            Value,
+            LogicalExpression,
+            ArithmeticExpression,
+            Undefined
         }
 
         public void SetFunCall(FunctionCall functionCall)
         {
             _value = functionCall;
+            Type = RValueType.FunCall;
         }
 
         public void SetValue(Token value)
         {
             _value = value;
+            Type = RValueType.Value;
+        }
+
+        public void SetArithmeticExpression(List<Token> tokens)
+        {
+            _value = tokens;
+            Type = RValueType.ArithmeticExpression;
+        }
+
+        public void SetLogicalExpression(List<Token> tokens)
+        {
+            _value = tokens;
+            Type = RValueType.LogicalExpression;
         }
 
         public FunctionCall GetFunCall()
@@ -41,10 +50,17 @@ namespace PythonCSharpTranslator
             return (Token) _value;
         }
 
-        public void SetLogicalExpression()
+        public List<Token> GetArithmeticExpression()
         {
-             
+            return (List<Token>) _value;
         }
+        
+        public List<Token> GetLogicalExpression()
+        {
+            return (List<Token>) _value;
+        }
+        
+        
 
     }
 }

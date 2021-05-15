@@ -38,6 +38,8 @@ namespace PythonCSharpTranslator
             while (!parser.SourceEnd)
             {
                 Statement s = parser.GetNextStatement();
+                AssignmentStatement a = (AssignmentStatement) s;
+                a.RightSide.GetValue();
                 Log.Information($"Fetched statement: {s}");
             }
 

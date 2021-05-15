@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using PythonCSharpTranslator;
+using Serilog;
 using Xunit;
 using static PythonCSharpTranslator.StatementType;
 using static PythonCSharpTranslator.TokenType;
@@ -8,39 +10,6 @@ namespace Tests
 {
     public class TestParser
     {
-        [Theory]
-        [InlineData(AssignmentStatementType, new[] {Identifier, AssignmentSymbol, IntegerConstant})]
-        [InlineData(AssignmentStatementType, new[] {Identifier, AssignmentSymbol, Identifier})]
-        public void ParseStatementFromTokens(StatementType expectedStatement, TokenType[] tokenTypes)
-        {
-            var tokens = new List<Token>();
-            foreach (var tokenType in tokenTypes)
-            {
-                tokens.Add(new Token(tokenType));
-            }
-
-            var parser = new Parser(new TokenSourceMock(tokens));
-            var s = parser.GetNextStatement();
-            Assert.Equal(expectedStatement, s.Type);
-        }
-
-        [Fact]
-        public void ParseAssignmentFromTokens()
-        {
-            var tokens = new List<Token>
-            {
-                new(Identifier, new TokenValue("hello")),
-                new(AssignmentSymbol),
-                new(IntegerConstant, new TokenValue(123))
-            };
-            var parser = new Parser(new TokenSourceMock(tokens));
-            var s = parser.GetNextStatement();
-            Assert.Equal(s.Type, AssignmentStatementType);
-            var assignStatement = (AssignmentStatement) s;
-            Assert.Equal("hello", assignStatement.LeftSide.Value.GetString());
-            Assert.Equal(123, assignStatement.RightSide.GetValue().Value.GetInt());
-        }
-
         [Fact]
         public void ParseAssignmentWithFunctionFromTokens()
         {
@@ -56,7 +25,7 @@ namespace Tests
             var s = parser.GetNextStatement();
             Assert.Equal(s.Type, AssignmentStatementType);
             var assignStatement = (AssignmentStatement) s;
-            Assert.Equal("hello", assignStatement.LeftSide.Value.GetString());
+            Assert.Equal("hello", assignStatement.LeftSide);
             Assert.Equal("hello_fun", assignStatement.RightSide.GetFunCall().Name);
         }
 
@@ -114,9 +83,11 @@ namespace Tests
         [InlineData("Resources/logical_expression_bad1.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad2.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad3.py", BadStatementType)]
-        [InlineData("Resources/if_statement.py", IfStatement)]
-        [InlineData("Resources/while_statement.py", WhileLoop)]
-        [InlineData("Resources/for_loop.py", ForLoop)]
+        [InlineData("Resources/arithmetic_expression1.py", AssignmentStatementType)]
+        [InlineData("Resources/arithmetic_expression2.py", AssignmentStatementType)]
+        [InlineData("Resources/if_statement.py", IfStatementType)]
+        [InlineData("Resources/while_statement.py", WhileLoopType)]
+        [InlineData("Resources/for_loop.py", ForLoopType)]
         [InlineData("Resources/function_def_no_args_no_ret_value.py", FunctionDefType)]
         [InlineData("Resources/function_def_no_args_ret_value.py", FunctionDefType)]
         [InlineData("Resources/function_def_one_arg.py", FunctionDefType)]
@@ -187,5 +158,52 @@ namespace Tests
             Assert.Equal(VariableDefType, funDef.Statements[0].Type); 
             Assert.Equal(ReturnStatement, funDef.Statements[1].Type); 
         }
+
+        [Fact]
+        public void ForLoopBuiltCorrectly()
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/for_loop.py")));
+            var s = parser.GetNextStatement();
+            Assert.Equal(ForLoopType, s.Type);
+            var forLoop = (ForLoop) s;
+            Assert.Equal("i", forLoop.IteratorName);
+            Assert.Equal(0, forLoop.Start);
+            Assert.Equal(5, forLoop.End);
+            Assert.Equal(AssignmentStatementType, forLoop.Statements[0].Type); 
+        }
+
+        [Fact]
+        public void AssignmentBuiltCorrectly()
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/arithmetic_expression1.py")));
+            var s = parser.GetNextStatement();
+            Assert.Equal(AssignmentStatementType, s.Type);
+            var assignStatement = (AssignmentStatement) s;
+            Assert.Equal("x", assignStatement.LeftSide);
+            Assert.Equal(RValue.RValueType.ArithmeticExpression, assignStatement.RightSide.Type);
+            var tokenList = assignStatement.RightSide.GetArithmeticExpression();
+            Assert.Equal(7, tokenList.Count);
+            Assert.Equal(2, tokenList[0].Value.GetInt());
+            Assert.Equal(Plus, tokenList[1].Type);
+            Assert.Equal(LeftParenthesis, tokenList[2].Type);
+            Assert.Equal(3, tokenList[3].Value.GetInt());
+            Assert.Equal(Star, tokenList[4].Type);
+            Assert.Equal(2, tokenList[5].Value.GetInt());
+            Assert.Equal(RightParenthesis, tokenList[6].Type);
+        }
+        
+        [Fact]
+        public void IfStatementBuiltCorrectly()
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/if_statement.py")));
+            var s = parser.GetNextStatement();
+            Assert.Equal(IfStatementType, s.Type);
+            var ifStatement = (IfStatement) s;
+            Assert.Equal(7, ifStatement.Condition.Count);
+            Assert.Equal(LeftParenthesis, ifStatement.Condition[0].Type);
+            Assert.Equal(RightParenthesis, ifStatement.Condition[6].Type);
+            Assert.Equal(AssignmentStatementType, ifStatement.Statements[0].Type);
+        }
+        
     }
 }
