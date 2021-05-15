@@ -1,5 +1,3 @@
-﻿def hello(x: str) -> bool:
-    x = 1
-    y = (y < 2)
-
-var_def = int(2)
+﻿def hello(x: int, y: float, z: str) -> bool:
+    w = int(123)
+    return False

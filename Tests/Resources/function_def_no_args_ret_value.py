@@ -1,3 +1,3 @@
 ﻿def hello() -> bool:
-    w = true
-    return true
+    w = True
+    return True

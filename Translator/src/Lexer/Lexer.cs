@@ -79,6 +79,7 @@ namespace PythonCSharpTranslator
                 _tokenValue.ConcatString(_lastCharacter.ToString());
                 GetChar(); 
             }
+            GetChar();
             return CreateToken(StringLiteral, _tokenValue);
         }
 

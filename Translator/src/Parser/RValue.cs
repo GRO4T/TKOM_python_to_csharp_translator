@@ -11,9 +11,9 @@ namespace PythonCSharpTranslator
             Value
         }
 
-        public RValue(FunCall funCall)
+        public RValue(FunctionCall functionCall)
         {
-            SetFunCall(funCall);
+            SetFunCall(functionCall);
         }
 
         public RValue(Token value)
@@ -21,9 +21,9 @@ namespace PythonCSharpTranslator
             SetValue(value);
         }
 
-        public void SetFunCall(FunCall funCall)
+        public void SetFunCall(FunctionCall functionCall)
         {
-            _value = funCall;
+            _value = functionCall;
         }
 
         public void SetValue(Token value)
@@ -31,9 +31,9 @@ namespace PythonCSharpTranslator
             _value = value;
         }
 
-        public FunCall GetFunCall()
+        public FunctionCall GetFunCall()
         {
-            return (FunCall) _value;
+            return (FunctionCall) _value;
         }
 
         public Token GetValue()
