@@ -13,7 +13,7 @@ namespace PythonCSharpTranslator
         FunctionDefType,
         AssignmentStatementType,
         VariableDefType,
-        ReturnStatement,
+        ReturnStatementType,
         BadStatementType
     }
 
@@ -74,6 +74,17 @@ namespace PythonCSharpTranslator
         public List<Token> Condition = new();
         public List<Statement> Statements = new();
     }
+    
+    public class WhileLoop : Statement
+    {
+        public WhileLoop()
+        {
+            Type = StatementType.WhileLoopType;
+        }
+
+        public List<Token> Condition = new();
+        public List<Statement> Statements = new();
+    }
 
     public class FunctionCall : Statement
     {
@@ -97,6 +108,15 @@ namespace PythonCSharpTranslator
         public int Start;
         public int End;
         public List<Statement> Statements = new();
+    }
+
+    public class ReturnStatement : Statement
+    {
+        public ReturnStatement()
+        {
+            Type = StatementType.ReturnStatementType;
+        }
+        public Token Value;
     }
 
     public class BadStatement : Statement

@@ -156,7 +156,7 @@ namespace Tests
             Assert.Equal(StrToken, funDef.ArgList[2].Item2);
             // check statements
             Assert.Equal(VariableDefType, funDef.Statements[0].Type); 
-            Assert.Equal(ReturnStatement, funDef.Statements[1].Type); 
+            Assert.Equal(ReturnStatementType, funDef.Statements[1].Type); 
         }
 
         [Fact]
@@ -203,6 +203,18 @@ namespace Tests
             Assert.Equal(LeftParenthesis, ifStatement.Condition[0].Type);
             Assert.Equal(RightParenthesis, ifStatement.Condition[6].Type);
             Assert.Equal(AssignmentStatementType, ifStatement.Statements[0].Type);
+        }
+
+        [Fact]
+        public void WhileLoopBuiltCorrectly()
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/while_statement.py")));
+            var s = parser.GetNextStatement();
+            Assert.Equal(WhileLoopType, s.Type);
+            var whileLoop = (WhileLoop) s;
+            Assert.Equal(5, whileLoop.Condition.Count);
+            Assert.Equal(Identifier, whileLoop.Condition[1].Type);
+            Assert.Equal(IntegerConstant, whileLoop.Condition[3].Type);
         }
         
     }

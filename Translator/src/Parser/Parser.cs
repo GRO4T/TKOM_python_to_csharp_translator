@@ -10,7 +10,7 @@ namespace PythonCSharpTranslator
     public class Parser
     {
         private readonly ITokenSource _tokenSource;
-        private Token _lastToken = null;
+        private Token _currentToken = null;
         private List<Token> _tokens;
         public bool SourceEnd = false;
         
@@ -21,9 +21,9 @@ namespace PythonCSharpTranslator
         public Statement GetNextStatement()
         {
             _tokens = new List<Token>();
-            while (_lastToken == null || _lastToken.Type == NewlineToken)
+            while (_currentToken == null || _currentToken.Type == NewlineToken)
                 GetToken(false);
-            _tokens.Add(_lastToken);
+            _tokens.Add(_currentToken);
             Statement? s;
             if ((s = ParseFuncCallOrVarDefOrAssign()) != null)
                 return s;
@@ -42,27 +42,27 @@ namespace PythonCSharpTranslator
 
         private Statement ParseReturnStatement()
         {
-            if (_lastToken.Type == Return)
+            if (_currentToken.Type == Return)
             {
                 GetToken();
-                if (IsParameter(_lastToken))
+                if (IsParameter(_currentToken))
                 {
                     GetToken();
-                    return CreateStatement(ReturnStatement);
+                    return new ReturnStatement {Value = _tokens[^2]};
                 }
-                return CreateStatement(BadStatementType);
+                return CreateBadStatement();
             }
             return null;
         }
 
         private Statement? ParseFuncCallOrVarDefOrAssign()
         {
-            if (_lastToken.Type == Identifier)
+            if (_currentToken.Type == Identifier)
             {
                  GetToken();
-                 if (_lastToken.Type == AssignmentSymbol)
+                 if (_currentToken.Type == AssignmentSymbol)
                      return ParseVarDefOrAssign();
-                 if (_lastToken.Type == LeftParenthesis)
+                 if (_currentToken.Type == LeftParenthesis)
                      return ParseFunCall();
             }
             return null;
@@ -74,44 +74,44 @@ namespace PythonCSharpTranslator
             {
                 var functionDef = new FunctionDef {Name = _tokens[1].Value.GetString(), ArgList = argList};
                 GetToken();
-                if (_lastToken.Type == Colon)
+                if (_currentToken.Type == Colon)
                 {
                     GetToken(); 
-                    return ParseBlockOld() ? CreateStatement(FunctionDefType) : CreateStatement(BadStatementType);
+                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement();
                 }
-                if (_lastToken.Type == Arrow)
+                if (_currentToken.Type == Arrow)
                 {
                     GetToken();
-                    if (!IsType(_lastToken)) return CreateStatement(BadStatementType);
-                    functionDef.ReturnType = _lastToken.Type;
+                    if (!IsType(_currentToken)) return CreateBadStatement();
+                    functionDef.ReturnType = _currentToken.Type;
                     GetToken();
-                    if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
+                    if (_currentToken.Type != Colon) return CreateBadStatement();
                     GetToken();
-                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateStatement(BadStatementType);
+                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement();
                 }
-                return CreateStatement(BadStatementType);
+                return CreateBadStatement();
             });
-            if (_lastToken.Type == DefToken)
+            if (_currentToken.Type == DefToken)
             {
                 var argList = new List<Tuple<string, TokenType>>();
                 GetToken();
-                if (_lastToken.Type != Identifier) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != Identifier) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != LeftParenthesis) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type == RightParenthesis) return parseClosure(argList);
+                if (_currentToken.Type == RightParenthesis) return parseClosure(argList);
                 while (true)
                 {
-                    if (_lastToken.Type != Identifier) return CreateStatement(BadStatementType);
-                    var argName = _lastToken.Value.GetString();
+                    if (_currentToken.Type != Identifier) return CreateBadStatement();
+                    var argName = _currentToken.Value.GetString();
                     GetToken();                    
-                    if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
+                    if (_currentToken.Type != Colon) return CreateBadStatement();
                     GetToken();
-                    if (!IsType(_lastToken)) return CreateStatement(BadStatementType);
-                    argList.Add(new Tuple<string, TokenType>(argName, _lastToken.Type)); 
+                    if (!IsType(_currentToken)) return CreateBadStatement();
+                    argList.Add(new Tuple<string, TokenType>(argName, _currentToken.Type)); 
                     GetToken();
-                    if (_lastToken.Type == RightParenthesis) return parseClosure(argList);
-                    if (_lastToken.Type != Comma) return CreateStatement(BadStatementType);
+                    if (_currentToken.Type == RightParenthesis) return parseClosure(argList);
+                    if (_currentToken.Type != Comma) return CreateBadStatement();
                     GetToken();
                 }
             }
@@ -120,62 +120,64 @@ namespace PythonCSharpTranslator
 
         private Statement? ParseForLoop()
         {
-            if (_lastToken.Type == ForToken)
+            if (_currentToken.Type == ForToken)
             {
                 var forLoop = new ForLoop();
                 GetToken();
-                if (_lastToken.Type != Identifier) return CreateStatement(BadStatementType);
-                forLoop.IteratorName = _lastToken.Value.GetString();
+                if (_currentToken.Type != Identifier) return CreateBadStatement();
+                forLoop.IteratorName = _currentToken.Value.GetString();
                 GetToken();
-                if (_lastToken.Type != InToken) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != InToken) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != RangeToken) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != RangeToken) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != LeftParenthesis) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != IntegerConstant) return CreateStatement(BadStatementType);
-                forLoop.Start = _lastToken.Value.GetInt();
+                if (_currentToken.Type != IntegerConstant) return CreateBadStatement();
+                forLoop.Start = _currentToken.Value.GetInt();
                 GetToken();
-                if (_lastToken.Type != Comma) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != Comma) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != IntegerConstant) return CreateStatement(BadStatementType);
-                forLoop.End = _lastToken.Value.GetInt();
+                if (_currentToken.Type != IntegerConstant) return CreateBadStatement();
+                forLoop.End = _currentToken.Value.GetInt();
                 GetToken();
-                if (_lastToken.Type != RightParenthesis) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != RightParenthesis) return CreateBadStatement();
                 GetToken();
-                if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != Colon) return CreateBadStatement();
                 GetToken();
-                return ParseBlock(ref forLoop.Statements) ? forLoop : CreateStatement(BadStatementType);
+                return ParseBlock(ref forLoop.Statements) ? forLoop : CreateBadStatement();
             }
             return null;
         }
 
         private Statement? ParseWhileLoop()
         {
-            if (_lastToken.Type == WhileToken)
+            if (_currentToken.Type == WhileToken)
             {
+                var whileLoop = new WhileLoop();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateStatement(BadStatementType);
-                if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
+                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement();
+                whileLoop.Condition = _tokens.GetRange(1, _tokens.Count - 2);
+                if (_currentToken.Type != Colon) return CreateBadStatement();
                 GetToken();
-                return ParseBlockOld() ? CreateStatement(WhileLoopType) : CreateStatement(BadStatementType);
+                return ParseBlock(ref whileLoop.Statements) ? whileLoop : CreateBadStatement();
             }
             return null;
         }
 
         private Statement? ParseIfStatement()
         {
-            if (_lastToken.Type == IfToken)
+            if (_currentToken.Type == IfToken)
             {
                 var ifStatement = new IfStatement();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateStatement(BadStatementType);
+                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement();
                 ifStatement.Condition = _tokens.GetRange(1, _tokens.Count - 2); 
-                if (_lastToken.Type != Colon) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != Colon) return CreateBadStatement();
                 GetToken();
-                return ParseBlock(ref ifStatement.Statements) ? ifStatement : CreateStatement(BadStatementType);
+                return ParseBlock(ref ifStatement.Statements) ? ifStatement : CreateBadStatement();
             }
             return null;
         }
@@ -184,25 +186,25 @@ namespace PythonCSharpTranslator
         {
             var funCall = new FunctionCall{Name=_tokens[^2].Value.GetString()};
             GetToken();
-            if (_lastToken.Type == RightParenthesis)
+            if (_currentToken.Type == RightParenthesis)
             {
                 GetToken();
                 return funCall; // no arguments
             }
-            if (!IsParameter(_lastToken)) return CreateStatement(BadStatementType);
-            funCall.Args.Add(_lastToken);
+            if (!IsParameter(_currentToken)) return CreateBadStatement();
+            funCall.Args.Add(_currentToken);
             GetToken();
-            if (_lastToken.Type == RightParenthesis) // single argument
+            if (_currentToken.Type == RightParenthesis) // single argument
             {
                 GetToken();
                 return funCall;
             }
-            while (_lastToken.Type != RightParenthesis) // multiple arguments
+            while (_currentToken.Type != RightParenthesis) // multiple arguments
             {
-                if (_lastToken.Type != Comma) return CreateStatement(BadStatementType);
+                if (_currentToken.Type != Comma) return CreateBadStatement();
                 GetToken();
-                if (!IsParameter(_lastToken)) return CreateStatement(BadStatementType);
-                funCall.Args.Add(_lastToken);
+                if (!IsParameter(_currentToken)) return CreateBadStatement();
+                funCall.Args.Add(_currentToken);
                 GetToken();
             }
             GetToken();
@@ -214,26 +216,26 @@ namespace PythonCSharpTranslator
         {
             GetToken();
             if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant, Identifier, LeftParenthesis}).Contains(
-                _lastToken.Type))
+                _currentToken.Type))
                 return ParseAssignment();
-            if (((IList) new[] {IntToken, BoolToken, StrToken, FloatToken}).Contains(_lastToken.Type))
+            if (((IList) new[] {IntToken, BoolToken, StrToken, FloatToken}).Contains(_currentToken.Type))
                 return ParseVariableDef();
-            return CreateStatement(BadStatementType);
+            return CreateBadStatement();
         }
 
         private Statement ParseAssignment()
         {
             var assignStatement = new AssignmentStatement{LeftSide = _tokens[^3].Value.GetString()};
             if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant}).Contains(
-                _lastToken.Type))
+                _currentToken.Type))
             {
                 GetToken();
-                if (_lastToken.Type == NewlineToken)
+                if (_currentToken.Type == NewlineToken)
                 {
                     assignStatement.RightSide.SetValue(_tokens[2]);
                     return assignStatement;
                 }
-                if (ParseBracketExpression(ref assignStatement.RightSide.Type) && (SourceEnd || _lastToken.Type == NewlineToken))
+                if (ParseBracketExpression(ref assignStatement.RightSide.Type) && (SourceEnd || _currentToken.Type == NewlineToken))
                 {
                     if (assignStatement.RightSide.Type == RValue.RValueType.LogicalExpression)
                         assignStatement.RightSide.SetLogicalExpression(_tokens.GetRange(2, _tokens.Count - 3));
@@ -242,15 +244,15 @@ namespace PythonCSharpTranslator
                     return assignStatement;
                 }
             }
-            if (_lastToken.Type == Identifier)
+            if (_currentToken.Type == Identifier)
             {
                 GetToken();
-                if (SourceEnd || _lastToken.Type == NewlineToken)
+                if (SourceEnd || _currentToken.Type == NewlineToken)
                 {
                     assignStatement.RightSide.SetValue(_tokens[2]);
                     return assignStatement;
                 }
-                if (_lastToken.Type == LeftParenthesis)
+                if (_currentToken.Type == LeftParenthesis)
                 {
                     var s = ParseFunCall();
                     if (s.Type == FunctionCallType)
@@ -260,10 +262,10 @@ namespace PythonCSharpTranslator
                         return assignStatement;
                     }
                 }
-                return CreateStatement(BadStatementType);
+                return CreateBadStatement();
             }
 
-            if (ParseBracketExpression(ref assignStatement.RightSide.Type) && (SourceEnd || _lastToken.Type == NewlineToken))
+            if (ParseBracketExpression(ref assignStatement.RightSide.Type) && (SourceEnd || _currentToken.Type == NewlineToken))
             {
                 if (assignStatement.RightSide.Type == RValue.RValueType.LogicalExpression)
                     assignStatement.RightSide.SetLogicalExpression(_tokens.GetRange(2, _tokens.Count - 3));
@@ -271,34 +273,34 @@ namespace PythonCSharpTranslator
                     assignStatement.RightSide.SetArithmeticExpression(_tokens.GetRange(2, _tokens.Count - 3));
                 return assignStatement;
             }
-            return CreateStatement(BadStatementType);
+            return CreateBadStatement();
         }
         
         private Statement ParseVariableDef()
         {
-            var varDef = new VariableDef {Name = _tokens[0].Value.GetString(), VariableType = _lastToken.Type};
+            var varDef = new VariableDef {Name = _tokens[0].Value.GetString(), VariableType = _currentToken.Type};
             GetToken();
-            if (_lastToken.Type != LeftParenthesis) return CreateStatement(BadStatementType);
+            if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
             GetToken();
-            if (_lastToken.Type != Identifier)
+            if (_currentToken.Type != Identifier)
             {
-                switch (_lastToken.Type)
+                switch (_currentToken.Type)
                 {
-                    case IntegerConstant: if (varDef.VariableType != IntToken) return CreateStatement(BadStatementType);
+                    case IntegerConstant: if (varDef.VariableType != IntToken) return CreateBadStatement();
                         break;
-                    case DecimalConstant: if (varDef.VariableType != FloatToken) return CreateStatement(BadStatementType);
+                    case DecimalConstant: if (varDef.VariableType != FloatToken) return CreateBadStatement();
                         break;
-                    case LogicalConstant: if (varDef.VariableType != BoolToken) return CreateStatement(BadStatementType);
+                    case LogicalConstant: if (varDef.VariableType != BoolToken) return CreateBadStatement();
                         break;
-                    case StringLiteral: if (varDef.VariableType != StrToken) return CreateStatement(BadStatementType);
+                    case StringLiteral: if (varDef.VariableType != StrToken) return CreateBadStatement();
                         break;
                     default:
-                        return CreateStatement(BadStatementType);
+                        return CreateBadStatement();
                 }
             }
-            varDef.InitialValue = _lastToken;
+            varDef.InitialValue = _currentToken;
             GetToken();
-            if (_lastToken.Type != RightParenthesis) return CreateStatement(BadStatementType);
+            if (_currentToken.Type != RightParenthesis) return CreateBadStatement();
             GetToken();
             return varDef;
         }
@@ -307,21 +309,21 @@ namespace PythonCSharpTranslator
         private bool ParseBracketExpression(ref RValue.RValueType type)
         {
             int brackets = 0;
-            Token tokenBeforeLast = _tokens[^2]; 
-            while (!SourceEnd && _lastToken.Type != NewlineToken && _lastToken.Type != Colon)
+            Token lastToken = _tokens[^2]; 
+            while (!SourceEnd && _currentToken.Type != NewlineToken && _currentToken.Type != Colon)
             {
-                if (_lastToken.Type == LeftParenthesis)
+                if (_currentToken.Type == LeftParenthesis)
                 {
                     brackets++;
                 }
-                else if (_lastToken.Type == RightParenthesis)
+                else if (_currentToken.Type == RightParenthesis)
                 {
-                    if (tokenBeforeLast.Type == LeftParenthesis) return false;
+                    if (lastToken.Type == LeftParenthesis) return false;
                     brackets--;
                 }
-                else if (IsUnaryOperator(_lastToken))
+                else if (IsUnaryOperator(_currentToken))
                 {
-                    if (IsArithmeticOperator(_lastToken))
+                    if (IsArithmeticOperator(_currentToken))
                     {
                         if (type == RValue.RValueType.LogicalExpression) return false;
                         type = RValue.RValueType.ArithmeticExpression;
@@ -331,21 +333,25 @@ namespace PythonCSharpTranslator
                         if (type == RValue.RValueType.ArithmeticExpression) return false;
                         type = RValue.RValueType.LogicalExpression;
                     }
-                    if (tokenBeforeLast.Type != RightParenthesis && !IsParameter(tokenBeforeLast)) return false;
+                    if (lastToken.Type != RightParenthesis && !IsParameter(lastToken)) return false;
                 }
-                else if (_lastToken.Type == NotToken)
+                else if (_currentToken.Type == NotToken)
                 {
                     if (type == RValue.RValueType.ArithmeticExpression) return false;
                     type = RValue.RValueType.LogicalExpression;
-                    if (tokenBeforeLast.Type != LeftParenthesis && !IsUnaryOperator(tokenBeforeLast)) return false;
+                    if (lastToken.Type != LeftParenthesis && !IsUnaryOperator(lastToken)) return false;
                 }
-                else if (IsParameter(_lastToken))
+                else if (IsParameter(_currentToken))
                 {
-                    if (tokenBeforeLast.Type != LeftParenthesis && tokenBeforeLast.Type != NotToken && !IsUnaryOperator(tokenBeforeLast)) return false;
+                    if (lastToken.Type != LeftParenthesis &&
+                        lastToken.Type != NotToken &&
+                        lastToken.Type != WhileToken &&
+                        lastToken.Type != IfToken &&
+                        !IsUnaryOperator(lastToken)) return false;
                 }
                 else
                     return false;
-                tokenBeforeLast = _lastToken;
+                lastToken = _currentToken;
                 GetToken(); 
             }
             if (type == RValue.RValueType.Undefined) type = RValue.RValueType.ArithmeticExpression;
@@ -354,69 +360,42 @@ namespace PythonCSharpTranslator
         
         private bool ParseBlock(ref List<Statement> statements)
         {
-            if (_lastToken.Type != NewlineToken) return false;
+            if (_currentToken.Type != NewlineToken) return false;
             GetToken();
-            if (_lastToken.Type != TabToken) return false; 
+            if (_currentToken.Type != TabToken) return false; 
             GetToken();
             var s = GetNextStatement();
             if (s.Type == BadStatementType)
                 return false;
             statements.Add(s);
-            if (_lastToken.Type != NewlineToken) return false;
+            if (_currentToken.Type != NewlineToken) return false;
             while (true)
             {
                 GetToken();
-                if (_lastToken.Type != TabToken) return true;
+                if (_currentToken.Type != TabToken) return true;
                 GetToken();
                 s = GetNextStatement();
                 if (s.Type == BadStatementType)
                     return false;
                 statements.Add(s);
-                if (_lastToken.Type != NewlineToken) return false;
-            }
-        }
-        private bool ParseBlockOld()
-        {
-            if (_lastToken.Type != NewlineToken) return false;
-            GetToken();
-            if (_lastToken.Type != TabToken) return false; 
-            GetToken();
-            var s = GetNextStatement();
-            if (s.Type == BadStatementType)
-                return false;
-            if (_lastToken.Type != NewlineToken) return false;
-            while (true)
-            {
-                GetToken();
-                if (_lastToken.Type != TabToken) return true;
-                GetToken();
-                s = GetNextStatement();
-                if (s.Type == BadStatementType)
-                    return false;
-                if (_lastToken.Type != NewlineToken) return false;
+                if (_currentToken.Type != NewlineToken) return false;
             }
         }
 
         private void GetToken(bool addTokens = true)
         {
-            _lastToken = _tokenSource.GetNextToken();
-            if (_lastToken.Type == End)
+            _currentToken = _tokenSource.GetNextToken();
+            if (_currentToken.Type == End)
                 SourceEnd = true;
             else if (addTokens)
-                _tokens.Add(_lastToken);
+                _tokens.Add(_currentToken);
             Log.Debug(
-                $"Parser fetched token: {_lastToken} line:{_lastToken.LineNumber} column:{_lastToken.ColumnNumber}");
+                $"Parser fetched token: {_currentToken} line:{_currentToken.LineNumber} column:{_currentToken.ColumnNumber}");
         }
 
-        private Statement CreateStatement(StatementType type)
+        private Statement CreateBadStatement()
         {
-            var tokens = _tokens;
-            switch (type)
-            {
-                case BadStatementType:
-                    return new BadStatement {BadToken = _lastToken};
-            }
-            return new Statement { Type = type };
+            return new BadStatement {BadToken = _currentToken};
         }
         
         private static bool IsParameter(Token token)

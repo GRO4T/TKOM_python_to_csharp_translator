@@ -10,7 +10,7 @@ namespace PythonCSharpTranslator
         static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Information()
                 .WriteTo.Console()
                 .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
@@ -38,8 +38,6 @@ namespace PythonCSharpTranslator
             while (!parser.SourceEnd)
             {
                 Statement s = parser.GetNextStatement();
-                AssignmentStatement a = (AssignmentStatement) s;
-                a.RightSide.GetValue();
                 Log.Information($"Fetched statement: {s}");
             }
 
