@@ -1,2 +1,2 @@
 ﻿for i in range(0, 5):
-    x = do_hello(y)
+    x = do_hello()

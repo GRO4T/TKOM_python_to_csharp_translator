@@ -125,6 +125,10 @@ namespace Tests
         [InlineData("Resources/if_statement.py", IfStatement)]
         [InlineData("Resources/while_statement.py", WhileLoop)]
         [InlineData("Resources/for_loop.py", ForLoop)]
+        [InlineData("Resources/function_def_no_args_no_ret_value.py", FunctionDef)]
+        [InlineData("Resources/function_def_no_args_ret_value.py", FunctionDef)]
+        [InlineData("Resources/function_def_one_arg.py", FunctionDef)]
+        [InlineData("Resources/function_def_mult_args_ret_value.py", FunctionDef)]
         public void ParseAssignmentWithLogicalExpression(string filename, StatementType expectedStatement)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
