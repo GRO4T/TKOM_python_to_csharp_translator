@@ -13,6 +13,7 @@ namespace PythonCSharpTranslator
         FunctionDef,
         AssignmentStatementType,
         VariableDefType,
+        ReturnStatement,
         BadStatementType
     }
     

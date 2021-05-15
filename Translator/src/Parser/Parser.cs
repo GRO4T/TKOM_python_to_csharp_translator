@@ -35,7 +35,25 @@ namespace PythonCSharpTranslator
                 return s;
             if ((s = ParseFunctionDef()) != null)
                 return s;
+            if ((s = ParseReturnStatement()) != null)
+                return s;
             throw new Exception("No statements");
+        }
+
+        private Statement ParseReturnStatement()
+        {
+            if (_lastToken.Type == Return)
+            {
+                GetToken();
+                if (IsParameter(_lastToken))
+                {
+                    GetToken();
+                    return CreateStatement(ReturnStatement);
+                }
+
+                return CreateStatement(BadStatementType);
+            }
+            return null;
         }
 
         private Statement? ParseFuncCallOrVarDefOrAssign()
@@ -300,6 +318,7 @@ namespace PythonCSharpTranslator
             {
                 GetToken();
                 if (_lastToken.Type != TabToken) return true;
+                GetToken();
                 s = GetNextStatement();
                 if (s.Type == BadStatementType)
                     return false;

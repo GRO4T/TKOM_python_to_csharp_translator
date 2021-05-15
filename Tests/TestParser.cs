@@ -129,11 +129,23 @@ namespace Tests
         [InlineData("Resources/function_def_no_args_ret_value.py", FunctionDef)]
         [InlineData("Resources/function_def_one_arg.py", FunctionDef)]
         [InlineData("Resources/function_def_mult_args_ret_value.py", FunctionDef)]
-        public void ParseAssignmentWithLogicalExpression(string filename, StatementType expectedStatement)
+        public void ParseSingleStatement(string filename, StatementType expectedStatement)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
             var s = parser.GetNextStatement();
             Assert.Equal(expectedStatement, s.Type);
+        }
+
+        [Theory]
+        [InlineData("Resources/function_def_then_var_def.py", new [] {FunctionDef, VariableDefType})]
+        public void ParseMultipleStatements(string filename, StatementType[] expectedStatements)
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
+            foreach (var expectedStatement in expectedStatements)
+            {
+                var s = parser.GetNextStatement();
+                Assert.Equal(expectedStatement, s.Type);
+            }
         }
     }
 }
