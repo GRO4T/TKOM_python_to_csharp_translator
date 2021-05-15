@@ -127,5 +127,11 @@ namespace PythonCSharpTranslator
         }
     
         public Token BadToken;
+        public string Description;
+
+        public override string ToString()
+        {
+            return $"{Description} at line:{BadToken.LineNumber} col:{BadToken.ColumnNumber}";
+        }
     }
 }

@@ -37,7 +37,7 @@ namespace PythonCSharpTranslator
                 return s;
             if ((s = ParseReturnStatement()) != null)
                 return s;
-            throw new Exception("No statements");
+            return CreateBadStatement("Cannot recognize statement");
         }
 
         private Statement ParseReturnStatement()
@@ -50,7 +50,7 @@ namespace PythonCSharpTranslator
                     GetToken();
                     return new ReturnStatement {Value = _tokens[^2]};
                 }
-                return CreateBadStatement();
+                return CreateBadStatement("Expected either value or an identifier");
             }
             return null;
         }
@@ -77,41 +77,41 @@ namespace PythonCSharpTranslator
                 if (_currentToken.Type == Colon)
                 {
                     GetToken(); 
-                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement();
+                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement("Error parsing block");
                 }
                 if (_currentToken.Type == Arrow)
                 {
                     GetToken();
-                    if (!IsType(_currentToken)) return CreateBadStatement();
+                    if (!IsType(_currentToken)) return CreateBadStatement("Expected type specifier");
                     functionDef.ReturnType = _currentToken.Type;
                     GetToken();
-                    if (_currentToken.Type != Colon) return CreateBadStatement();
+                    if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                     GetToken();
-                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement();
+                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement("Error parsing block");
                 }
-                return CreateBadStatement();
+                return CreateBadStatement("Function declaration should end with either a colon or return type specifier");
             });
             if (_currentToken.Type == DefToken)
             {
                 var argList = new List<Tuple<string, TokenType>>();
                 GetToken();
-                if (_currentToken.Type != Identifier) return CreateBadStatement();
+                if (_currentToken.Type != Identifier) return CreateBadStatement("Expected function name");
                 GetToken();
-                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
+                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement("Expected opening bracket");
                 GetToken();
                 if (_currentToken.Type == RightParenthesis) return parseClosure(argList);
                 while (true)
                 {
-                    if (_currentToken.Type != Identifier) return CreateBadStatement();
+                    if (_currentToken.Type != Identifier) return CreateBadStatement("Expected argument name");
                     var argName = _currentToken.Value.GetString();
                     GetToken();                    
-                    if (_currentToken.Type != Colon) return CreateBadStatement();
+                    if (_currentToken.Type != Colon) return CreateBadStatement("Expected colon after argument name");
                     GetToken();
-                    if (!IsType(_currentToken)) return CreateBadStatement();
+                    if (!IsType(_currentToken)) return CreateBadStatement("Expected type specifier");
                     argList.Add(new Tuple<string, TokenType>(argName, _currentToken.Type)); 
                     GetToken();
                     if (_currentToken.Type == RightParenthesis) return parseClosure(argList);
-                    if (_currentToken.Type != Comma) return CreateBadStatement();
+                    if (_currentToken.Type != Comma) return CreateBadStatement("Arguments should be separated by a comma");
                     GetToken();
                 }
             }
@@ -124,28 +124,28 @@ namespace PythonCSharpTranslator
             {
                 var forLoop = new ForLoop();
                 GetToken();
-                if (_currentToken.Type != Identifier) return CreateBadStatement();
+                if (_currentToken.Type != Identifier) return CreateBadStatement("Iterator not specified");
                 forLoop.IteratorName = _currentToken.Value.GetString();
                 GetToken();
-                if (_currentToken.Type != InToken) return CreateBadStatement();
+                if (_currentToken.Type != InToken) return CreateBadStatement("Expected 'in' keyword");
                 GetToken();
-                if (_currentToken.Type != RangeToken) return CreateBadStatement();
+                if (_currentToken.Type != RangeToken) return CreateBadStatement("Expected 'range' keyword");
                 GetToken();
-                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
+                if (_currentToken.Type != LeftParenthesis) return CreateBadStatement("Expected an opening bracket");
                 GetToken();
-                if (_currentToken.Type != IntegerConstant) return CreateBadStatement();
+                if (_currentToken.Type != IntegerConstant) return CreateBadStatement("Expected an integer");
                 forLoop.Start = _currentToken.Value.GetInt();
                 GetToken();
-                if (_currentToken.Type != Comma) return CreateBadStatement();
+                if (_currentToken.Type != Comma) return CreateBadStatement("Start and end should be separated by a comma");
                 GetToken();
-                if (_currentToken.Type != IntegerConstant) return CreateBadStatement();
+                if (_currentToken.Type != IntegerConstant) return CreateBadStatement("Expected an integer");
                 forLoop.End = _currentToken.Value.GetInt();
                 GetToken();
-                if (_currentToken.Type != RightParenthesis) return CreateBadStatement();
+                if (_currentToken.Type != RightParenthesis) return CreateBadStatement("Expected a closing bracket");
                 GetToken();
-                if (_currentToken.Type != Colon) return CreateBadStatement();
+                if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref forLoop.Statements) ? forLoop : CreateBadStatement();
+                return ParseBlock(ref forLoop.Statements) ? forLoop : CreateBadStatement("Error parsing block");
             }
             return null;
         }
@@ -157,11 +157,11 @@ namespace PythonCSharpTranslator
                 var whileLoop = new WhileLoop();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement();
+                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement("Cannot parse condition");
                 whileLoop.Condition = _tokens.GetRange(1, _tokens.Count - 2);
-                if (_currentToken.Type != Colon) return CreateBadStatement();
+                if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref whileLoop.Statements) ? whileLoop : CreateBadStatement();
+                return ParseBlock(ref whileLoop.Statements) ? whileLoop : CreateBadStatement("Error during parsing block");
             }
             return null;
         }
@@ -173,11 +173,11 @@ namespace PythonCSharpTranslator
                 var ifStatement = new IfStatement();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement();
+                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement("Cannot parse condition");
                 ifStatement.Condition = _tokens.GetRange(1, _tokens.Count - 2); 
-                if (_currentToken.Type != Colon) return CreateBadStatement();
+                if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref ifStatement.Statements) ? ifStatement : CreateBadStatement();
+                return ParseBlock(ref ifStatement.Statements) ? ifStatement : CreateBadStatement("Error during parsing block");
             }
             return null;
         }
@@ -191,7 +191,7 @@ namespace PythonCSharpTranslator
                 GetToken();
                 return funCall; // no arguments
             }
-            if (!IsParameter(_currentToken)) return CreateBadStatement();
+            if (!IsParameter(_currentToken)) return CreateBadStatement("Argument should be either a value or an identifier");
             funCall.Args.Add(_currentToken);
             GetToken();
             if (_currentToken.Type == RightParenthesis) // single argument
@@ -201,9 +201,9 @@ namespace PythonCSharpTranslator
             }
             while (_currentToken.Type != RightParenthesis) // multiple arguments
             {
-                if (_currentToken.Type != Comma) return CreateBadStatement();
+                if (_currentToken.Type != Comma) return CreateBadStatement("Expected comma after each consequential argument");
                 GetToken();
-                if (!IsParameter(_currentToken)) return CreateBadStatement();
+                if (!IsParameter(_currentToken)) return CreateBadStatement("Argument should be either a value or an identifier");
                 funCall.Args.Add(_currentToken);
                 GetToken();
             }
@@ -220,7 +220,7 @@ namespace PythonCSharpTranslator
                 return ParseAssignment();
             if (((IList) new[] {IntToken, BoolToken, StrToken, FloatToken}).Contains(_currentToken.Type))
                 return ParseVariableDef();
-            return CreateBadStatement();
+            return CreateBadStatement("Found assignment symbol, but cannot recognize either assignment or variable definition");
         }
 
         private Statement ParseAssignment()
@@ -262,7 +262,6 @@ namespace PythonCSharpTranslator
                         return assignStatement;
                     }
                 }
-                return CreateBadStatement();
             }
 
             if (ParseBracketExpression(ref assignStatement.RightSide.Type) && (SourceEnd || _currentToken.Type == NewlineToken))
@@ -273,34 +272,34 @@ namespace PythonCSharpTranslator
                     assignStatement.RightSide.SetArithmeticExpression(_tokens.GetRange(2, _tokens.Count - 3));
                 return assignStatement;
             }
-            return CreateBadStatement();
+            return CreateBadStatement("Right side of assignment can be: value, identifier, function call, arithmetic or logical expression");
         }
         
         private Statement ParseVariableDef()
         {
             var varDef = new VariableDef {Name = _tokens[0].Value.GetString(), VariableType = _currentToken.Type};
             GetToken();
-            if (_currentToken.Type != LeftParenthesis) return CreateBadStatement();
+            if (_currentToken.Type != LeftParenthesis) return CreateBadStatement("Expected left parenthesis after type specification");
             GetToken();
             if (_currentToken.Type != Identifier)
             {
                 switch (_currentToken.Type)
                 {
-                    case IntegerConstant: if (varDef.VariableType != IntToken) return CreateBadStatement();
+                    case IntegerConstant: if (varDef.VariableType != IntToken) return CreateBadStatement("Should be an integer");
                         break;
-                    case DecimalConstant: if (varDef.VariableType != FloatToken) return CreateBadStatement();
+                    case DecimalConstant: if (varDef.VariableType != FloatToken) return CreateBadStatement("Should be a float value");
                         break;
-                    case LogicalConstant: if (varDef.VariableType != BoolToken) return CreateBadStatement();
+                    case LogicalConstant: if (varDef.VariableType != BoolToken) return CreateBadStatement("Should be a logical value");
                         break;
-                    case StringLiteral: if (varDef.VariableType != StrToken) return CreateBadStatement();
+                    case StringLiteral: if (varDef.VariableType != StrToken) return CreateBadStatement("Should be of string type");
                         break;
                     default:
-                        return CreateBadStatement();
+                        return CreateBadStatement("Declared and assigned type not matching");
                 }
             }
             varDef.InitialValue = _currentToken;
             GetToken();
-            if (_currentToken.Type != RightParenthesis) return CreateBadStatement();
+            if (_currentToken.Type != RightParenthesis) return CreateBadStatement("Expected right parenthesis");
             GetToken();
             return varDef;
         }
@@ -312,10 +311,7 @@ namespace PythonCSharpTranslator
             Token lastToken = _tokens[^2]; 
             while (!SourceEnd && _currentToken.Type != NewlineToken && _currentToken.Type != Colon)
             {
-                if (_currentToken.Type == LeftParenthesis)
-                {
-                    brackets++;
-                }
+                if (_currentToken.Type == LeftParenthesis) brackets++;
                 else if (_currentToken.Type == RightParenthesis)
                 {
                     if (lastToken.Type == LeftParenthesis) return false;
@@ -385,6 +381,8 @@ namespace PythonCSharpTranslator
         private void GetToken(bool addTokens = true)
         {
             _currentToken = _tokenSource.GetNextToken();
+            if (_currentToken.Type == UnknownToken)
+                Log.Error($"Unknown token at line:{_currentToken.LineNumber} col:{_currentToken.ColumnNumber}");
             if (_currentToken.Type == End)
                 SourceEnd = true;
             else if (addTokens)
@@ -393,9 +391,9 @@ namespace PythonCSharpTranslator
                 $"Parser fetched token: {_currentToken} line:{_currentToken.LineNumber} column:{_currentToken.ColumnNumber}");
         }
 
-        private Statement CreateBadStatement()
+        private Statement CreateBadStatement(string descr)
         {
-            return new BadStatement {BadToken = _currentToken};
+            return new BadStatement {BadToken = _currentToken, Description = descr};
         }
         
         private static bool IsParameter(Token token)
