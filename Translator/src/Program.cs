@@ -35,10 +35,16 @@ namespace PythonCSharpTranslator
             // Parser parser = new Parser(new TokenSourceMock(l));
 
             var parser = new Parser(new Lexer(new FileCharacterSource("Resources/logical_expression2.py")));
+            Statement s;
             while (!parser.SourceEnd)
             {
-                Statement s = parser.GetNextStatement();
-                Log.Information($"Fetched statement: {s}");
+                s = parser.GetNextStatement();
+                // if (s.Type == StatementType.BadStatementType)
+                // {
+                //     // Log.Error(s.ToString());
+                //     break;
+                // }
+                Log.Information($"Fetched statement:\n {s}");
             }
 
             Log.CloseAndFlush();

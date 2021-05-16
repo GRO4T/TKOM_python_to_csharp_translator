@@ -10,9 +10,9 @@ namespace PythonCSharpTranslator
         private char _lastCharacter;
         private bool _sourceEnd;
         private TokenValue _tokenValue;
-        private bool newline = false;
-        private const int indentWidth = 4;
-        private int indentCounter = 0;
+        private bool _parsingIndent = true;
+        private const int IndentWidth = 4;
+        private int _indentCounter = 0;
 
         public Lexer(ICharacterSource characterSource)
         {
@@ -25,6 +25,7 @@ namespace PythonCSharpTranslator
             char? c = _source.GetChar();
             if (c == null)
                 _sourceEnd = true;
+            if (_parsingIndent && c != '\t' && c != ' ') _parsingIndent = false;
             Log.Debug($"GetChar fetched character: {c}");
             _lastCharacter = c.GetValueOrDefault();
         }
@@ -39,20 +40,8 @@ namespace PythonCSharpTranslator
         public Token GetNextToken()
         {
             _tokenValue = new TokenValue();
-            while (_lastCharacter == ' ')
-            {
-                if (newline)
-                {
-                    indentCounter++;
-                    if (indentCounter == indentWidth)
-                    {
-                        indentCounter = 0;
-                        newline = false;
-                        return CreateToken(TabToken);
-                    }
-                }
-                GetChar();
-            }
+            var token = ParseIndentOrSkipWhites();
+            if (token != null) return token;
             if (_lastCharacter == '#')
                 SkipCommentLine();
             if (_sourceEnd)
@@ -66,6 +55,23 @@ namespace PythonCSharpTranslator
             if (char.IsLetter(_lastCharacter))
                 return ParseIdentifierOrWordTokenOrLogicalConstant();
             return ParseSpecialCharacterSymbol();
+        }
+
+        private Token? ParseIndentOrSkipWhites()
+        {
+            while (_lastCharacter == ' ')
+            {
+                if (_parsingIndent)
+                {
+                    if (++_indentCounter == IndentWidth)
+                    {
+                        _indentCounter = 0;
+                        return CreateToken(TabToken);
+                    }
+                }
+                GetChar();
+            }
+            return null;
         }
 
         private Token ParseStringLiteral()
@@ -257,15 +263,15 @@ namespace PythonCSharpTranslator
                 case '\t':
                     return GetCharAndReturnToken(TabToken);
                 case '\n':
-                    indentCounter = 0;
-                    newline = true;
+                    _indentCounter = 0;
+                    _parsingIndent = true;
                     return GetCharAndReturnToken(NewlineToken);
                 case '\r':
                     GetChar();
                     if (_lastCharacter == '\n')
                     {
-                        indentCounter = 0;
-                        newline = true;
+                        _indentCounter = 0;
+                        _parsingIndent = true;
                         return GetCharAndReturnToken(NewlineToken);
                     }
                     return CreateToken(UnknownToken);

@@ -5,7 +5,7 @@ identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
 type ::= "int" | "float" | "string" | "bool"
 digit ::= [0-9]
 
-comparison_operator ::= "<=" | "<" | ">=" | ">" | "==" | "!="
+logicalUnaryOperator ::= "<=" | "<" | ">=" | ">" | "==" | "!="
 
 integerConstant ::= ([1-9] digit*) | "0"
 decimalConstant ::= ([1-9] digit*) | "0" "." digit* [1-9] 
@@ -16,14 +16,20 @@ value ::=
 
 parameter ::= value | identifier
 
-logicalFormula ::= 
-	(parameter comparison_operator parameter) | (not? parameter)
+logicalFormula ::=  
+	(parameter logicalUnaryOperator parameter) | (not? parameter)
 
 logicalExpression ::= 
 	"(" recursiveLogicalExpression ")" | logicalFormula
 
 recursiveLogicalExpression ::= 
-	(logicalExpression | (logicalExpression ("and" | "or") logicalExpression)) 
+	(logicalExpression | (logicalExpression logicalUnaryOperator logicalExpression)) 
+
+arithmeticExpression ::=
+	"(" recursiveArithmeticExpression ")" | parameter | (parameter arithmeticUnaryOperator paramter)
+
+recursiveArithmeticExpression ::= 
+	(arithmeticExpression | (arithmeticExpression arithmeticUnaryOperator arithmeticExpression))
 
 statement ::= 
 	funcCallOrVarDefOrAssign | ifStatement | whileLoop | forLoop | functionDef
@@ -35,11 +41,11 @@ function_call ::=
 	 identifier "(" ((parameter ",")* parameter)? ")"
 
 ifStatement ::= 
-	"if" "(" logicalExpression ")" ":" newline
+	"if" logicalExpression ":" newline
 	(tab statement newline)+
 
 whileLoop ::= 
-	"while" "(" logicalExpression ")" ":" newline
+	"while" logicalExpression ":" newline
 	(tab statement newline)+
 
 forLoop ::= 
@@ -54,7 +60,7 @@ functionDef ::=
 	(tab statement newline)+
 
 assignment ::= 
-	identifier "=" (value | identifier | function_call | logicalExpression)
+	identifier "=" (value | identifier | function_call | logicalExpression | arithmeticExpression)
 
 variableDef ::= 
 	identifier "=" type "(" ((parameter ",")* parameter)? ")"

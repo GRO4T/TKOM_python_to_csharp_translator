@@ -216,6 +216,19 @@ namespace Tests
             Assert.Equal(Identifier, whileLoop.Condition[1].Type);
             Assert.Equal(IntegerConstant, whileLoop.Condition[3].Type);
         }
+
+        [Fact]
+        public void NestedStatements()
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/nested_statements.py")));
+            var s = parser.GetNextStatement();
+            Assert.Equal(FunctionDefType, s.Type);
+            var functionDef = (FunctionDef) s;
+            Assert.Equal(IfStatementType, functionDef.Statements[0].Type);
+            var ifStatement = (IfStatement)functionDef.Statements[0];
+            Assert.Equal(AssignmentStatementType, ifStatement.Statements[0].Type);
+            Assert.Equal(ReturnStatementType, ifStatement.Statements[1].Type);
+        }
         
     }
 }

@@ -38,6 +38,7 @@ namespace Tests
         [InlineData("def", DefToken)]
         [InlineData("\n", NewlineToken)]
         [InlineData("\t", TabToken)]
+        [InlineData("    ", TabToken)]
         [InlineData("->", Arrow)]
         [InlineData("a", Identifier)]
         [InlineData("in", InToken)]
@@ -142,6 +143,7 @@ namespace Tests
                 NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant 
             })]
         [InlineData("intValue = 1\n", new[]{Identifier, AssignmentSymbol, IntegerConstant, NewlineToken})]
+        [InlineData("        ", new []{TabToken, TabToken})]
         public void ParseStatement(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));
@@ -151,7 +153,7 @@ namespace Tests
             {
                 tokens.Add(token.Type); 
             }
-            Assert.Equal(tokens.Count, expectedTokens.Length);
+            Assert.Equal(expectedTokens.Length, tokens.Count);
             for (int i = 0; i < expectedTokens.Length; i++)
             {
                 Assert.Equal(tokens[i], expectedTokens[i]);

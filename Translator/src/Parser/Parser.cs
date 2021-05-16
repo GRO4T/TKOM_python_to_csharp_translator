@@ -18,7 +18,7 @@ namespace PythonCSharpTranslator
         {
             _tokenSource = tokenSource;
         }
-        public Statement GetNextStatement()
+        public Statement GetNextStatement(int nestingLevel = 0)
         {
             _tokens = new List<Token>();
             while (_currentToken == null || _currentToken.Type == NewlineToken)
@@ -27,13 +27,13 @@ namespace PythonCSharpTranslator
             Statement? s;
             if ((s = ParseFuncCallOrVarDefOrAssign()) != null)
                 return s;
-            if ((s = ParseIfStatement()) != null)
+            if ((s = ParseIfStatement(nestingLevel)) != null)
                 return s;
-            if ((s = ParseWhileLoop()) != null)
+            if ((s = ParseWhileLoop(nestingLevel)) != null)
                 return s;
-            if ((s = ParseForLoop()) != null)
+            if ((s = ParseForLoop(nestingLevel)) != null)
                 return s;
-            if ((s = ParseFunctionDef()) != null)
+            if ((s = ParseFunctionDef(nestingLevel)) != null)
                 return s;
             if ((s = ParseReturnStatement()) != null)
                 return s;
@@ -68,7 +68,7 @@ namespace PythonCSharpTranslator
             return null;
         }
 
-        private Statement? ParseFunctionDef()
+        private Statement? ParseFunctionDef(int nestingLevel)
         {
             var parseClosure = new Func<List<Tuple<string, TokenType>>, Statement>((argList) =>
             {
@@ -77,7 +77,7 @@ namespace PythonCSharpTranslator
                 if (_currentToken.Type == Colon)
                 {
                     GetToken(); 
-                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement("Error parsing block");
+                    return ParseBlock(ref functionDef.Statements, nestingLevel) ? functionDef : CreateBadStatement("Error parsing block");
                 }
                 if (_currentToken.Type == Arrow)
                 {
@@ -87,7 +87,7 @@ namespace PythonCSharpTranslator
                     GetToken();
                     if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                     GetToken();
-                    return ParseBlock(ref functionDef.Statements) ? functionDef : CreateBadStatement("Error parsing block");
+                    return ParseBlock(ref functionDef.Statements, nestingLevel) ? functionDef : CreateBadStatement("Error parsing block");
                 }
                 return CreateBadStatement("Function declaration should end with either a colon or return type specifier");
             });
@@ -118,7 +118,7 @@ namespace PythonCSharpTranslator
             return null;
         }
 
-        private Statement? ParseForLoop()
+        private Statement? ParseForLoop(int nestingLevel)
         {
             if (_currentToken.Type == ForToken)
             {
@@ -145,12 +145,12 @@ namespace PythonCSharpTranslator
                 GetToken();
                 if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref forLoop.Statements) ? forLoop : CreateBadStatement("Error parsing block");
+                return ParseBlock(ref forLoop.Statements, nestingLevel) ? forLoop : CreateBadStatement("Error parsing block");
             }
             return null;
         }
 
-        private Statement? ParseWhileLoop()
+        private Statement? ParseWhileLoop(int nestingLevel)
         {
             if (_currentToken.Type == WhileToken)
             {
@@ -161,12 +161,12 @@ namespace PythonCSharpTranslator
                 whileLoop.Condition = _tokens.GetRange(1, _tokens.Count - 2);
                 if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref whileLoop.Statements) ? whileLoop : CreateBadStatement("Error during parsing block");
+                return ParseBlock(ref whileLoop.Statements, nestingLevel) ? whileLoop : CreateBadStatement("Error parsing block");
             }
             return null;
         }
 
-        private Statement? ParseIfStatement()
+        private Statement? ParseIfStatement(int nestingLevel)
         {
             if (_currentToken.Type == IfToken)
             {
@@ -177,7 +177,7 @@ namespace PythonCSharpTranslator
                 ifStatement.Condition = _tokens.GetRange(1, _tokens.Count - 2); 
                 if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
-                return ParseBlock(ref ifStatement.Statements) ? ifStatement : CreateBadStatement("Error during parsing block");
+                return ParseBlock(ref ifStatement.Statements, nestingLevel) ? ifStatement : CreateBadStatement("Error parsing block");
             }
             return null;
         }
@@ -354,27 +354,40 @@ namespace PythonCSharpTranslator
             return brackets == 0;
         }
         
-        private bool ParseBlock(ref List<Statement> statements)
+        private bool ParseBlock(ref List<Statement> statements, int nestingLevel)
         {
+            nestingLevel++;
             if (_currentToken.Type != NewlineToken) return false;
-            GetToken();
-            if (_currentToken.Type != TabToken) return false; 
-            GetToken();
-            var s = GetNextStatement();
-            if (s.Type == BadStatementType)
-                return false;
-            statements.Add(s);
-            if (_currentToken.Type != NewlineToken) return false;
-            while (true)
+            for (int i = 0; i < nestingLevel; i++)
             {
                 GetToken();
-                if (_currentToken.Type != TabToken) return true;
+                if (_currentToken.Type != TabToken) return i == 0;
+            }
+            GetToken();
+            var s = GetNextStatement(nestingLevel);
+            if (s.Type == BadStatementType)
+            {
+                Log.Error(s.ToString());
+                return false;
+            }
+            statements.Add(s);
+            if (!IsNewlineOrEnd(_currentToken)) return false;
+            while (true)
+            {
+                for (int i = 0; i < nestingLevel; i++)
+                {
+                    GetToken();
+                    if (_currentToken.Type != TabToken) return i == 0;
+                }
                 GetToken();
-                s = GetNextStatement();
+                s = GetNextStatement(nestingLevel);
                 if (s.Type == BadStatementType)
+                {
+                    Log.Error(s.ToString());
                     return false;
+                }
                 statements.Add(s);
-                if (_currentToken.Type != NewlineToken) return false;
+                if (!IsNewlineOrEnd(_currentToken)) return false;
             }
         }
 
@@ -391,9 +404,14 @@ namespace PythonCSharpTranslator
                 $"Parser fetched token: {_currentToken} line:{_currentToken.LineNumber} column:{_currentToken.ColumnNumber}");
         }
 
-        private Statement CreateBadStatement(string descr)
+        private Statement CreateBadStatement(string desc)
         {
-            return new BadStatement {BadToken = _currentToken, Description = descr};
+            return new BadStatement {BadToken = _currentToken, Description = desc};
+        }
+
+        private static bool IsNewlineOrEnd(Token token)
+        {
+            return (token.Type == NewlineToken || token.Type == End);
         }
         
         private static bool IsParameter(Token token)

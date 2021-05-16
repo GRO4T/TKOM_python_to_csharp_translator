@@ -93,45 +93,67 @@ identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
 type ::= "int" | "float" | "string" | "bool"
 digit ::= [0-9]
 
-variable ::= identifier
+logicalUnaryOperator ::= "<=" | "<" | ">=" | ">" | "==" | "!="
 
-constant ::= ([1-9] digit*) | "0"
-logical_value ::= True | False
+integerConstant ::= ([1-9] digit*) | "0"
+decimalConstant ::= ([1-9] digit*) | "0" "." digit* [1-9] 
+logicalConstant ::= True | False
 string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
-value ::= constant | logical_value | string
+value ::= 
+	integerConstant | decimalConstant | logicalConstant | string
 
-function_arg ::= value | function_call | variable
-function_call ::= identifier "(" ((function_arg ",")* function_arg)? ")"
+parameter ::= value | identifier
 
-comparison_operator ::= "<=" | "<" | ">=" | ">"
-equality_operator ::= "==" | "!="
+logicalFormula ::=  
+	(parameter logicalUnaryOperator parameter) | (not? parameter)
 
-logical_formula ::= 
-	(variable equality_operator (string | constant | logical_value | function_call)) |
-    (function_call equality_operator (string | constant | logical_value | function_call)) |
-    ((constant | variable | function_call) comparison_operator (constant | variable | function_call)) |
-    ((constant | logical_value) | (not? (variable | function_call)))
-logical_expression ::= 
-	"(" (logical_expression | (logical_expression ("and" | "or") logical_expression)) ")"
+logicalExpression ::= 
+	"(" recursiveLogicalExpression ")" | logicalFormula
 
-if_statement ::= "if" logical_expression ":" newline
-while_loop ::= "while" logical_expression ":" newline
-for_loop ::= "for" identifier "in" "range"
-    "(" (constant | variable | function_call) "," (constant | variable | function_call) ")" ":" newline
+recursiveLogicalExpression ::= 
+	(logicalExpression | (logicalExpression logicalUnaryOperator logicalExpression)) 
 
-function_def ::= 
-	"def" identifier "(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")"
-        ("->" type)? ":" newline
+arithmeticExpression ::=
+	"(" recursiveArithmeticExpression ")" | parameter | (parameter arithmeticUnaryOperator paramter)
+
+recursiveArithmeticExpression ::= 
+	(arithmeticExpression | (arithmeticExpression arithmeticUnaryOperator arithmeticExpression))
+
+statement ::= 
+	funcCallOrVarDefOrAssign | ifStatement | whileLoop | forLoop | functionDef
+
+funcCallOrVarDefOrAssign ::=
+	 function_call | variableDef | assignment
+
+function_call ::=
+	 identifier "(" ((parameter ",")* parameter)? ")"
+
+ifStatement ::= 
+	"if" logicalExpression ":" newline
+	(tab statement newline)+
+
+whileLoop ::= 
+	"while" logicalExpression ":" newline
+	(tab statement newline)+
+
+forLoop ::= 
+	"for" identifier "in" "range"
+    "(" integerConstant "," integerConstant ")" ":" newline
+	(tab statement newline)+
+
+functionDef ::= 
+	"def" identifier 
+	"(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")"
+	("->" type)? ":" newline
+	(tab statement newline)+
+
 assignment ::= 
-	variable "=" (value | variable | function_call | logical_expression) newline
-variable_def ::= 
-	identifier "=" type "(" ((function_arg ",")* function_arg)? ")" newline
+	identifier "=" (value | identifier | function_call | logicalExpression | arithmeticExpression)
 
-code_block ::= 
-	(
-		(assignment | variable_def) code_block?) | 
-		((if_statement | for_loop | while_loop | function_def) (tab code_block)+
-	)
+variableDef ::= 
+	identifier "=" type "(" ((parameter ",")* parameter)? ")"
+
+program ::= (statement newline)*
 ```
 
 ## Sposób uruchomienia
@@ -209,38 +231,52 @@ określonej struktury składniowej lub zgłoszenia błędu.
 ```c#
 public enum TokenType
 {
+    TabToken,
+    NewlineToken,
     End,
-    Indent,
     Identifier,
-    Type,
-    Value,
-    Arrow,
-    Return,
 
-    Assignment,
+    IntToken,
+    StrToken,
+    BoolToken,
+    FloatToken,
+
+    AssignmentSymbol,
     Colon,
     Comma,
     LeftParenthesis,
     RightParenthesis,
+    Return,
+    Arrow,
 
     Plus,
     Minus,
-    Mult,
-    Div,
+    Star,
+    Slash,
 
     LessThan,
     GreaterThan,
-    Equals,
+    EqualSymbol,
+    NotEqualSymbol,
     LessEqualThan,
     GreaterEqualThan,
 
-    Not,
-    And,
-    Or,
+    NotToken,
+    AndToken,
+    OrToken,
 
-    For,
-    While,
-    If,
-    Def,
+    ForToken,
+    WhileToken,
+    IfToken,
+    DefToken,
+    InToken,
+    RangeToken,
+
+    LogicalConstant,
+    DecimalConstant,
+    IntegerConstant,
+    StringLiteral,
+
+    UnknownToken
 }
 ```

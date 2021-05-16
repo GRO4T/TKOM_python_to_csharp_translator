@@ -21,14 +21,34 @@ namespace PythonCSharpTranslator
     {
 
         public StatementType Type;
+        public int NestingLevel = 0;
         
         public override string ToString()
         {
-            return $"{Type}";
+            string indent = "";
+            for (int i = 0; i < NestingLevel; i++)
+                indent += '\t';
+            return $"{indent}{Type}";
         }
     }
 
-    public class FunctionDef : Statement
+    public class BlockStatement : Statement
+    {
+        public List<Statement> Statements = new();
+
+        public override string ToString()
+        {
+            string childrenToString = "";
+            foreach (var statement in Statements)
+            {
+                statement.NestingLevel = NestingLevel + 1;
+                childrenToString += statement.ToString() + '\n';
+            }
+            return $"{base.ToString()}\n{childrenToString}";
+        }
+    }
+
+    public class FunctionDef : BlockStatement
     {
         public FunctionDef()
         {
@@ -38,7 +58,6 @@ namespace PythonCSharpTranslator
         public string Name;
         public TokenType? ReturnType = null;
         public List<Tuple<string, TokenType>> ArgList = new();
-        public List<Statement> Statements = new();
     }
 
     public class AssignmentStatement : Statement
@@ -64,7 +83,7 @@ namespace PythonCSharpTranslator
         public TokenType VariableType;
     }
 
-    public class IfStatement : Statement
+    public class IfStatement : BlockStatement
     {
         public IfStatement()
         {
@@ -72,10 +91,9 @@ namespace PythonCSharpTranslator
         }
 
         public List<Token> Condition = new();
-        public List<Statement> Statements = new();
     }
     
-    public class WhileLoop : Statement
+    public class WhileLoop : BlockStatement 
     {
         public WhileLoop()
         {
@@ -83,7 +101,6 @@ namespace PythonCSharpTranslator
         }
 
         public List<Token> Condition = new();
-        public List<Statement> Statements = new();
     }
 
     public class FunctionCall : Statement
@@ -97,7 +114,7 @@ namespace PythonCSharpTranslator
         public List<Token> Args = new();
     }
 
-    public class ForLoop : Statement
+    public class ForLoop : BlockStatement 
     {
         public ForLoop()
         {
@@ -107,7 +124,6 @@ namespace PythonCSharpTranslator
         public String IteratorName;
         public int Start;
         public int End;
-        public List<Statement> Statements = new();
     }
 
     public class ReturnStatement : Statement
