@@ -39,11 +39,11 @@ namespace PythonCSharpTranslator
             while (!parser.SourceEnd)
             {
                 s = parser.GetNextStatement();
-                // if (s.Type == StatementType.BadStatementType)
-                // {
-                //     // Log.Error(s.ToString());
-                //     break;
-                // }
+                if (s.Type == StatementType.BadStatementType)
+                {
+                    Log.Error(s.ToString());
+                    break;
+                }
                 Log.Information($"Fetched statement:\n {s}");
             }
 

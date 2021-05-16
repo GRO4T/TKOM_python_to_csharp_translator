@@ -83,6 +83,7 @@ namespace Tests
         [InlineData("Resources/logical_expression_bad1.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad2.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad3.py", BadStatementType)]
+        [InlineData("Resources/logical_expression_bad4.py", BadStatementType)]
         [InlineData("Resources/arithmetic_expression1.py", AssignmentStatementType)]
         [InlineData("Resources/arithmetic_expression2.py", AssignmentStatementType)]
         [InlineData("Resources/if_statement.py", IfStatementType)]

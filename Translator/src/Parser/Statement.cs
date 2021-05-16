@@ -147,7 +147,9 @@ namespace PythonCSharpTranslator
 
         public override string ToString()
         {
-            return $"{Description} at line:{BadToken.LineNumber} col:{BadToken.ColumnNumber}";
+            var colNum = BadToken.ColumnNumber == -1 ? "last" : BadToken.ColumnNumber.ToString();
+            var lineNum = BadToken.ColumnNumber == -1 ? BadToken.LineNumber - 1 : BadToken.LineNumber;
+            return $"{Description} at line:{lineNum} col:{colNum}";
         }
     }
 }

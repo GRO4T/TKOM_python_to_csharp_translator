@@ -157,7 +157,7 @@ namespace PythonCSharpTranslator
                 var whileLoop = new WhileLoop();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement("Cannot parse condition");
+                if (!ParseBracketExpression(ref type) || type == RValue.RValueType.ArithmeticExpression) return CreateBadStatement("Cannot parse condition");
                 whileLoop.Condition = _tokens.GetRange(1, _tokens.Count - 2);
                 if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
@@ -173,7 +173,7 @@ namespace PythonCSharpTranslator
                 var ifStatement = new IfStatement();
                 RValue.RValueType type = RValue.RValueType.Undefined;
                 GetToken();
-                if (!ParseBracketExpression(ref type) || type != RValue.RValueType.LogicalExpression) return CreateBadStatement("Cannot parse condition");
+                if (!ParseBracketExpression(ref type) || type == RValue.RValueType.ArithmeticExpression) return CreateBadStatement("Cannot parse condition");
                 ifStatement.Condition = _tokens.GetRange(1, _tokens.Count - 2); 
                 if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
                 GetToken();
@@ -307,8 +307,9 @@ namespace PythonCSharpTranslator
 
         private bool ParseBracketExpression(ref RValue.RValueType type)
         {
+            if (SourceEnd || _currentToken.Type == NewlineToken || _currentToken.Type == Colon) return false;
             int brackets = 0;
-            Token lastToken = _tokens[^2]; 
+            Token lastToken = _tokens[^2];
             while (!SourceEnd && _currentToken.Type != NewlineToken && _currentToken.Type != Colon)
             {
                 if (_currentToken.Type == LeftParenthesis) brackets++;
@@ -350,7 +351,6 @@ namespace PythonCSharpTranslator
                 lastToken = _currentToken;
                 GetToken(); 
             }
-            if (type == RValue.RValueType.Undefined) type = RValue.RValueType.ArithmeticExpression;
             return brackets == 0;
         }
         
