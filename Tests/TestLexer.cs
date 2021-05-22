@@ -144,6 +144,7 @@ namespace Tests
             })]
         [InlineData("intValue = 1\n", new[]{Identifier, AssignmentSymbol, IntegerConstant, NewlineToken})]
         [InlineData("        ", new []{TabToken, TabToken})]
+        [InlineData("1+", new []{IntegerConstant, Plus})]
         public void ParseStatement(string testString, TokenType[] expectedTokens)
         {
             Lexer lexer = new Lexer(new StringCharacterSource(testString));

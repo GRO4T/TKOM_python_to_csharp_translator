@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Serilog;
 using static PythonCSharpTranslator.TokenType;
 
@@ -32,9 +33,8 @@ namespace PythonCSharpTranslator
 
         private bool IsTokenSeparator()
         {
-            return _sourceEnd ||_lastCharacter == ' ' || _lastCharacter == '\n'
-                   || _lastCharacter == '(' || _lastCharacter == ')' || _lastCharacter == ':'
-                   || _lastCharacter == '\r' || _lastCharacter == ',';
+            return _sourceEnd || 
+                   ((IList) new[] {' ', '\n', '(', ')', ':', '\r', ',', '+', '-', '*', '/'}).Contains(_lastCharacter);
         }
 
         public Token GetNextToken()

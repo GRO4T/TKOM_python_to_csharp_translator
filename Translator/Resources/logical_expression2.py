@@ -1,6 +1,5 @@
 ﻿def hello():
     w = True
-    x = 2  
-    if :
-        x = 1
+    x = (1+2)
+    for i in range(1, 2):
         return False
