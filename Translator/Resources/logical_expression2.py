@@ -1,5 +1,2 @@
-﻿def hello():
-    w = True
-    x = (1+2)
-    for i in range(1, 2):
-        return False
+﻿def hello(x: str) -> bool:
+    hello_inner(x)

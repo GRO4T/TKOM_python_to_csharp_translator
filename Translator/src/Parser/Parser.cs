@@ -267,17 +267,21 @@ namespace PythonCSharpTranslator
 
         private Statement ParseAssignment()
         {
+            // define functions and variables
             var assignStatement = new AssignmentStatement{LeftSide = _tokens[^3].Value.GetString()};
-            Statement outStatement = null;
-            if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant}).Contains(
-                _currentToken.Type))
+            Statement retStatement = null;
+            var parseNewline = new Func<Statement?>(() =>
             {
-                GetToken();
                 if (_currentToken.Type == NewlineToken)
                 {
                     assignStatement.RightSide.SetValue(_tokens[2]);
                     return assignStatement;
                 }
+                return null;
+            });
+            var parseBracketExpression = new Func<Statement?>(() =>
+            {
+                Statement outStatement = null;
                 if (ParseBracketExpression(ref assignStatement.RightSide.Type, ref outStatement))
                 {
                     if ((SourceEnd || _currentToken.Type == NewlineToken))
@@ -294,15 +298,23 @@ namespace PythonCSharpTranslator
                     Log.Error(outStatement.ToString());
                     return CreateBadStatement("Error parsing bracket expression");
                 }
+                return null;
+            });
+            // logic 
+            if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant}).Contains(
+                _currentToken.Type))
+            {
+                GetToken();
+                if ((retStatement = parseNewline()) != null)
+                    return retStatement;
+                if ((retStatement = parseBracketExpression()) != null)
+                    return retStatement;
             }
             if (_currentToken.Type == Identifier)
             {
                 GetToken();
-                if (SourceEnd || _currentToken.Type == NewlineToken)
-                {
-                    assignStatement.RightSide.SetValue(_tokens[2]);
-                    return assignStatement;
-                }
+                if ((retStatement = parseNewline()) != null)
+                    return retStatement;
                 if (_currentToken.Type == LeftParenthesis)
                 {
                     var s = ParseFunCall();
@@ -314,22 +326,8 @@ namespace PythonCSharpTranslator
                     }
                 }
             }
-            if (ParseBracketExpression(ref assignStatement.RightSide.Type, ref outStatement))
-            {
-                if ((SourceEnd || _currentToken.Type == NewlineToken))
-                {
-                    if (assignStatement.RightSide.Type == RValue.RValueType.LogicalExpression)
-                        assignStatement.RightSide.SetLogicalExpression(_tokens.GetRange(2, _tokens.Count - 3));
-                    else
-                        assignStatement.RightSide.SetArithmeticExpression(_tokens.GetRange(2, _tokens.Count - 3));
-                    return assignStatement;
-                }
-            }
-            else
-            {
-                Log.Error(outStatement.ToString());
-                return CreateBadStatement("Error parsing bracket expression");
-            }
+            if ((retStatement = parseBracketExpression()) != null)
+                return retStatement;
             return CreateBadStatement("Right side of assignment can be: value, identifier, function call, arithmetic or logical expression");
         }
         

@@ -66,12 +66,13 @@ namespace PythonCSharpTranslator
                     if (++_indentCounter == IndentWidth)
                     {
                         _indentCounter = 0;
+                        GetChar();
                         return CreateToken(TabToken);
                     }
                 }
                 GetChar();
             }
-            return null;
+            return _indentCounter != 0 ? CreateToken(UnknownToken) : null;
         }
 
         private Token ParseStringLiteral()
