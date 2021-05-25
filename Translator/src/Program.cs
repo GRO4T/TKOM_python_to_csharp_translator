@@ -15,37 +15,21 @@ namespace PythonCSharpTranslator
                 .WriteTo.File("logs\\logfile_default.txt")
                 .CreateLogger();
 
-            // Lexer lexer = new Lexer(new StringCharacterSource("test_integer = int(3)"));
-            // Lexer lexer = new Lexer(new StringCharacterSource("intValue = 1"));
-            // ITokenSource lexer = new Lexer(new FileCharacterSource("Resources/input.py"));
-            // Parser parser(lexer);
-            // Parser parser = new Parser(lexer);
-            
-            // TokenType[] tokens = new[]
-            //     {Identifier, LeftParenthesis, Identifier, Comma, DecimalConstant, RightParenthesis };
-            // List<Token> l = new(); 
-            // foreach (var t in tokens)
-            // {
-            //     l.Add(new Token(t));
-            // }
-            //
-            //
-            // l[0].Value = new TokenValue("hello");
-            //
-            // Parser parser = new Parser(new TokenSourceMock(l));
-
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/logical_expression2.py")));
-            Statement s;
-            while (!parser.SourceEnd)
+            var semanticAnalyzer =
+                new SemanticAnalyzer(
+                    new Parser(
+                        new Lexer(
+                            new FileCharacterSource("Resources/logical_expression2.py")
+                        )
+                    )
+                );
+            var program = new ProgramObject();
+            while (!semanticAnalyzer.IsEnd())
             {
-                s = parser.GetNextStatement();
-                if (s.Type == StatementType.BadStatementType)
-                {
-                    Log.Error(s.ToString());
-                    break;
-                }
-                Log.Information($"Fetched statement:\n {s}");
+                program.Statements.Add(semanticAnalyzer.AnalyzeNextStatement());
             }
+
+            Translator.Save(Translator.Translate(program), "test.cs");
 
             Log.CloseAndFlush();
         }

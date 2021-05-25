@@ -18,6 +18,11 @@ namespace PythonCSharpTranslator
         {
             _tokenSource = tokenSource;
         }
+
+        public bool IsEnd()
+        {
+            return SourceEnd;
+        }
         public Statement GetNextStatement(int nestingLevel = 0)
         {
             _tokens = new List<Token>();
