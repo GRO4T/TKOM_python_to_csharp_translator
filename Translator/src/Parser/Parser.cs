@@ -23,7 +23,7 @@ namespace PythonCSharpTranslator
         {
             return SourceEnd;
         }
-        public Statement GetNextStatement(int nestingLevel = 0)
+        public Statement? GetNextStatement(int nestingLevel = 0)
         {
             _tokens = new List<Token>();
             while (_currentToken == null || _currentToken.Type == NewlineToken)
@@ -42,6 +42,8 @@ namespace PythonCSharpTranslator
                 return s;
             if ((s = ParseReturnStatement()) != null)
                 return s;
+            if (IsEnd())
+                return null;
             return CreateBadStatement("Cannot recognize statement");
         }
 

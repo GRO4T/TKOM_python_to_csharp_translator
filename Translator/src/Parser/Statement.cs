@@ -149,7 +149,7 @@ namespace PythonCSharpTranslator
         {
             var colNum = BadToken.ColumnNumber == -1 ? "last" : BadToken.ColumnNumber.ToString();
             var lineNum = BadToken.ColumnNumber == -1 ? BadToken.LineNumber - 1 : BadToken.LineNumber;
-            return $"{Description} at line:{lineNum} col:{colNum}";
+            return $"{Description} at line:{lineNum} col:{colNum} error:{BadToken.ErrorDescription}";
         }
     }
 }

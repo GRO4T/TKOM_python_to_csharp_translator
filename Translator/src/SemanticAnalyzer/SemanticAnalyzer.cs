@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using System;
+using Serilog;
 
 namespace PythonCSharpTranslator
 {
@@ -19,8 +20,11 @@ namespace PythonCSharpTranslator
         public Statement AnalyzeNextStatement()
         {
             var s = _parser.GetNextStatement();
-            if (s.Type == StatementType.BadStatementType)
+            if (s != null && s.Type == StatementType.BadStatementType)
+            {
                 Log.Error(s.ToString());
+                throw new TranslationError();
+            }
             Log.Information($"Fetched statement:\n {s}");
             return s;
         }

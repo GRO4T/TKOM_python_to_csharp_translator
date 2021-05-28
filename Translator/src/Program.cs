@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Serilog;
 using static PythonCSharpTranslator.TokenType;
@@ -24,12 +25,24 @@ namespace PythonCSharpTranslator
                     )
                 );
             var program = new ProgramObject();
-            while (!semanticAnalyzer.IsEnd())
+            
+            try
             {
-                program.Statements.Add(semanticAnalyzer.AnalyzeNextStatement());
+                while (!semanticAnalyzer.IsEnd())
+                {
+                    var s = semanticAnalyzer.AnalyzeNextStatement();
+                    if (s != null)
+                        program.Statements.Add(s);
+                }
+                Translator.Save(Translator.Translate(program), "test.cs");
             }
-
-            Translator.Save(Translator.Translate(program), "test.cs");
+            catch (TranslationError e)
+            {
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.ToString());
+            }
 
             Log.CloseAndFlush();
         }

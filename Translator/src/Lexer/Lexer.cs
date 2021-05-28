@@ -72,7 +72,7 @@ namespace PythonCSharpTranslator
                 }
                 GetChar();
             }
-            return _indentCounter != 0 ? CreateToken(UnknownToken) : null;
+            return _indentCounter != 0 ? CreateUnknownToken("Indentation error!") : null;
         }
 
         private Token ParseStringLiteral()
@@ -290,7 +290,24 @@ namespace PythonCSharpTranslator
 
         private Token CreateToken(TokenType type, TokenValue value = null)
         {
-            return new(type, value, _source.GetLineNumber(), _source.GetColumnNumber() - 1);
+            return new()
+            {
+                Type = type,
+                Value = value,
+                LineNumber = _source.GetLineNumber(),
+                ColumnNumber = _source.GetColumnNumber() - 1,
+            };
+        }
+
+        private Token CreateUnknownToken(string errorDescription = null)
+        {
+            return new()
+            {
+                Type = UnknownToken,
+                LineNumber = _source.GetLineNumber(),
+                ColumnNumber = _source.GetColumnNumber() - 1,
+                ErrorDescription = errorDescription
+            };
         }
     }
 }

@@ -103,6 +103,7 @@ namespace Tests
 
         [Theory]
         [InlineData("Resources/function_def_then_var_def.py", new [] {FunctionDefType, VariableDefType})]
+        [InlineData("Resources/double_assignment.py", new [] {AssignmentStatementType, AssignmentStatementType})]
         public void ParseMultipleStatements(string filename, StatementType[] expectedStatements)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));

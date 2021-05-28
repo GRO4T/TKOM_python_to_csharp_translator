@@ -10,6 +10,8 @@ namespace PythonCSharpTranslator
         public int LineNumber { get; set; }
         public int ColumnNumber { get; set; }
 
+        public string ErrorDescription;
+
         public Token()
         {
             
