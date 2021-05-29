@@ -87,11 +87,13 @@ namespace PythonCSharpTranslator
         public void ConcatString(string s)
         {
             Value = (string) Value + s;
+            Type = typeof(string);
         }
 
         public void ConvertToDouble()
         {
             Value = Convert.ToDouble(Value);
+            Type = typeof(double);
         }
 
         public override string ToString()

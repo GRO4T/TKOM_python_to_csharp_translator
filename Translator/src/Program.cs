@@ -20,7 +20,7 @@ namespace PythonCSharpTranslator
                 new SemanticAnalyzer(
                     new Parser(
                         new Lexer(
-                            new FileCharacterSource("Resources/logical_expression2.py")
+                            new FileCharacterSource("Resources/input.py")
                         )
                     )
                 );
@@ -28,16 +28,19 @@ namespace PythonCSharpTranslator
             
             try
             {
+                Log.Information("Starting parsing...");
                 while (!semanticAnalyzer.IsEnd())
                 {
                     var s = semanticAnalyzer.AnalyzeNextStatement();
                     if (s != null)
                         program.Statements.Add(s);
                 }
+                Log.Information("Parsing finished.");
                 Translator.Save(Translator.Translate(program), "test.cs");
             }
             catch (TranslationError e)
             {
+                Log.Error(e.ToString());
             }
             catch (Exception e)
             {
