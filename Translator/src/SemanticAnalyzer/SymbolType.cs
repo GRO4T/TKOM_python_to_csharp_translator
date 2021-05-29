@@ -4,6 +4,6 @@
     {
         Function,
         Constant,
-        
+        Variable
     }
 }

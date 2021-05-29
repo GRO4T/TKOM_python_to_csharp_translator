@@ -220,10 +220,10 @@ namespace PythonCSharpTranslator
             return CreateToken(Identifier, _tokenValue);
         }
 
-        private Token GetCharAndReturnToken(TokenType tokenType)
+        private Token GetCharAndReturnToken(TokenType tokenType, string value = null)
         {
             GetChar();
-            return CreateToken(tokenType);
+            return CreateToken(tokenType, new TokenValue(value));
         }
 
         private Token? ParseSpecialCharacterSymbol()
@@ -231,35 +231,35 @@ namespace PythonCSharpTranslator
             switch (_lastCharacter)
             {
                 case '(':
-                    return GetCharAndReturnToken(LeftParenthesis);
+                    return GetCharAndReturnToken(LeftParenthesis, "(");
                 case ')':
-                    return GetCharAndReturnToken(RightParenthesis);
+                    return GetCharAndReturnToken(RightParenthesis, ")");
                 case ':':
-                    return GetCharAndReturnToken(Colon);
+                    return GetCharAndReturnToken(Colon, ":");
                 case ',':
-                    return GetCharAndReturnToken(Comma);
+                    return GetCharAndReturnToken(Comma, ",");
                 case '+':
-                    return GetCharAndReturnToken(Plus);
+                    return GetCharAndReturnToken(Plus, "+");
                 case '-':
                     GetChar();
-                    return _lastCharacter == '>' ? GetCharAndReturnToken(Arrow) : GetCharAndReturnToken(Minus);
+                    return _lastCharacter == '>' ? GetCharAndReturnToken(Arrow, "->") : GetCharAndReturnToken(Minus, "-");
                 case '*':
-                    return GetCharAndReturnToken(Star);
+                    return GetCharAndReturnToken(Star, "*");
                 case '/':
-                    return GetCharAndReturnToken(Slash);
+                    return GetCharAndReturnToken(Slash, "/");
                 case '=':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(TokenType.EqualSymbol) : CreateToken(AssignmentSymbol);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(EqualSymbol, "==") : CreateToken(AssignmentSymbol, new TokenValue("="));
                 case '<':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(LessEqualThan) : CreateToken(LessThan);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(LessEqualThan, "<=") : CreateToken(LessThan, new TokenValue("<"));
                 case '>':
                     GetChar();
-                    return _lastCharacter == '=' ? GetCharAndReturnToken(GreaterEqualThan) : CreateToken(GreaterThan);
+                    return _lastCharacter == '=' ? GetCharAndReturnToken(GreaterEqualThan, ">=") : CreateToken(GreaterThan, new TokenValue(">"));
                 case '!':
                     GetChar();
                     return _lastCharacter == '='
-                        ? GetCharAndReturnToken(NotEqualSymbol)
+                        ? GetCharAndReturnToken(NotEqualSymbol, "!=")
                         : GetCharAndReturnToken(UnknownToken);
                 case '\t':
                     return GetCharAndReturnToken(TabToken);

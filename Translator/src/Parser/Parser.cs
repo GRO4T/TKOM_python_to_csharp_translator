@@ -52,7 +52,7 @@ namespace PythonCSharpTranslator
             if (_currentToken.Type == Return)
             {
                 GetToken();
-                if (IsParameter(_currentToken))
+                if (_currentToken.IsParameter())
                 {
                     GetToken();
                     return new ReturnStatement {Value = _tokens[^2]};
@@ -95,7 +95,7 @@ namespace PythonCSharpTranslator
                 if (_currentToken.Type == Arrow)
                 {
                     GetToken();
-                    if (!IsType(_currentToken)) return CreateBadStatement("Expected type specifier");
+                    if (!_currentToken.IsType()) return CreateBadStatement("Expected type specifier");
                     functionDef.ReturnType = _currentToken.Type;
                     GetToken();
                     if (_currentToken.Type != Colon) return CreateBadStatement("Statement should end with a colon");
@@ -126,7 +126,7 @@ namespace PythonCSharpTranslator
                     GetToken();                    
                     if (_currentToken.Type != Colon) return CreateBadStatement("Expected colon after argument name");
                     GetToken();
-                    if (!IsType(_currentToken)) return CreateBadStatement("Expected type specifier");
+                    if (!_currentToken.IsType()) return CreateBadStatement("Expected type specifier");
                     argList.Add(new Tuple<string, TokenType>(argName, _currentToken.Type)); 
                     GetToken();
                     if (_currentToken.Type == RightParenthesis) return parseClosure(argList);
@@ -240,7 +240,7 @@ namespace PythonCSharpTranslator
                 GetToken();
                 return funCall; // no arguments
             }
-            if (!IsParameter(_currentToken)) return CreateBadStatement("Argument should be either a value or an identifier");
+            if (!_currentToken.IsParameter()) return CreateBadStatement("Argument should be either a value or an identifier");
             funCall.Args.Add(_currentToken);
             GetToken();
             if (_currentToken.Type == RightParenthesis) // single argument
@@ -252,7 +252,7 @@ namespace PythonCSharpTranslator
             {
                 if (_currentToken.Type != Comma) return CreateBadStatement("Expected comma after each consequential argument");
                 GetToken();
-                if (!IsParameter(_currentToken)) return CreateBadStatement("Argument should be either a value or an identifier");
+                if (!_currentToken.IsParameter()) return CreateBadStatement("Argument should be either a value or an identifier");
                 funCall.Args.Add(_currentToken);
                 GetToken();
             }
@@ -382,16 +382,16 @@ namespace PythonCSharpTranslator
                 if (_currentToken.Type == LeftParenthesis) brackets++;
                 else if (_currentToken.Type == RightParenthesis)
                 {
-                    if (lastToken.Type == LeftParenthesis || IsUnaryOperator(lastToken))
+                    if (lastToken.Type == LeftParenthesis || lastToken.IsUnaryOperator())
                     {
                         statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                         return false;
                     }
                     brackets--;
                 }
-                else if (IsUnaryOperator(_currentToken))
+                else if (_currentToken.IsUnaryOperator())
                 {
-                    if (IsArithmeticOperator(_currentToken))
+                    if (_currentToken.IsArithmeticOperator())
                     {
                         if (type == RValue.RValueType.LogicalExpression)
                         {
@@ -410,7 +410,7 @@ namespace PythonCSharpTranslator
                         type = RValue.RValueType.LogicalExpression;
                     }
 
-                    if (lastToken.Type != RightParenthesis && !IsParameter(lastToken))
+                    if (lastToken.Type != RightParenthesis && !lastToken.IsParameter())
                     {
                         statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                         return false;
@@ -424,19 +424,19 @@ namespace PythonCSharpTranslator
                         return false;
                     }
                     type = RValue.RValueType.LogicalExpression;
-                    if (lastToken.Type != LeftParenthesis && !IsUnaryOperator(lastToken))
+                    if (lastToken.Type != LeftParenthesis && !lastToken.IsUnaryOperator())
                     {
                         statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                         return false;
                     }
                 }
-                else if (IsParameter(_currentToken))
+                else if (_currentToken.IsParameter())
                 {
                     if (lastToken.Type != LeftParenthesis &&
                         lastToken.Type != NotToken &&
                         lastToken.Type != WhileToken &&
                         lastToken.Type != IfToken &&
-                        !IsUnaryOperator(lastToken))
+                        !lastToken.IsUnaryOperator())
                     {
                         statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                         return false;
@@ -457,7 +457,7 @@ namespace PythonCSharpTranslator
                 return false;
             }
 
-            if (IsUnaryOperator(lastToken))
+            if (lastToken.IsUnaryOperator())
             {
                 statement = CreateBadStatement($"Expression cannot end with an unary operator");
                 return false;
@@ -537,47 +537,5 @@ namespace PythonCSharpTranslator
             return new BadStatement {BadToken = _currentToken, Description = desc};
         }
         
-        private static bool IsParameter(Token token)
-        {
-            return ((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant, Identifier})
-                            .Contains(token.Type);
-        }
-
-        private static bool IsUnaryOperator(Token token)
-        {
-            return ((IList) new[]
-                {
-                    EqualSymbol, NotEqualSymbol, GreaterThan, LessThan,
-                    GreaterEqualThan, LessEqualThan, AndToken, OrToken,
-                    Plus, Minus, Slash, Star
-                })
-                            .Contains(token.Type);
-        }
-
-        private static bool IsArithmeticOperator(Token token)
-        {
-            return ((IList) new[]
-                {
-                    Plus, Minus, Slash, Star
-                })
-                            .Contains(token.Type);
-        }
-        
-        private static bool IsLogicalOperator(Token token)
-        {
-            return ((IList) new[]
-                {
-                    EqualSymbol, NotEqualSymbol, GreaterThan, LessThan,
-                    GreaterEqualThan, LessEqualThan, AndToken, OrToken,
-                    NotToken
-                })
-                            .Contains(token.Type);
-        }
-
-        private static bool IsType(Token token)
-        {
-            return ((IList) new[] {IntToken, StrToken, FloatToken, BoolToken})
-                            .Contains(token.Type);
-        }
     }
 }

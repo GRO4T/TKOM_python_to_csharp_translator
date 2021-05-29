@@ -4,5 +4,6 @@
     {
         public string Name;
         public SymbolType Type;
+        public Statement Statement;
     }
 }

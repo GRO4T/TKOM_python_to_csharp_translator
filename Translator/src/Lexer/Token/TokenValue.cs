@@ -65,7 +65,7 @@ namespace PythonCSharpTranslator
         public void SetString(string s)
         {
             Value = s;
-            Type = s.GetType();
+            Type = s?.GetType();
         }
 
         public void SetBool(bool value)
@@ -98,7 +98,7 @@ namespace PythonCSharpTranslator
 
         public override string ToString()
         {
-            return Value.ToString();
+            return Value?.ToString();
         }
     }
 }

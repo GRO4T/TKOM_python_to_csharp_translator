@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Serilog;
 using static PythonCSharpTranslator.StatementType;
 
@@ -22,6 +23,13 @@ namespace PythonCSharpTranslator
             sourceCode += "}\n";
             Log.Information("Translation finished.");
             return sourceCode;
+        }
+        
+        public static void Save(string translatedProgram, string filepath)
+        {
+            var writer = new StreamWriter(filepath);
+            writer.Write(translatedProgram);
+            writer.Close();
         }
         
         public static void ReorderStatements(ref List<Statement> statements)
@@ -59,24 +67,7 @@ namespace PythonCSharpTranslator
             sourceCode += "\t{\n";
             do
             {
-                switch (statementIterator.Current.Type)
-                {
-                    case AssignmentStatementType:
-                        sourceCode = TranslateAssignment(sourceCode, (AssignmentStatement) statementIterator.Current,
-                            2);
-                        break;
-                    case FunctionCallType:
-                        sourceCode = AddLine(sourceCode,
-                            TranslateFunctionCall("", (FunctionCall) statementIterator.Current), 2);
-                        break;
-                    case VariableDefType:
-                        sourceCode = TranslateVariableDef(sourceCode, (VariableDef) statementIterator.Current,  2);
-                        break;
-                    case ForLoopType:
-                        sourceCode = TranslateForLoop(sourceCode, (ForLoop) statementIterator.Current, 2);
-                        break;
-                }
-                Log.Information(statementIterator.Current?.ToString());
+                sourceCode = TranslateTypesThatCanOccurOnEveryNestingLevel(sourceCode, statementIterator.Current, 2);
             } while (statementIterator.MoveNext());
             sourceCode += "\t}\n";
             return sourceCode;
@@ -116,7 +107,7 @@ namespace PythonCSharpTranslator
 
         private static string TranslateAssignment(string sourceCode, AssignmentStatement assignmentStatement, int nestingLevel)
         {
-            string rvalue = TranslateIdentifierOrConstant("", assignmentStatement.RightSide.GetValue());
+            string rvalue = TranslateRValue("", assignmentStatement.RightSide); 
             return AddLine(sourceCode, $"{assignmentStatement.LeftSide} = {rvalue}", nestingLevel);
         }
         
@@ -125,9 +116,12 @@ namespace PythonCSharpTranslator
             sourceCode += $"{functionCall.Name}(";
             using var argIterator = functionCall.Args.GetEnumerator();
             if (argIterator.MoveNext())
-                sourceCode += argIterator.Current.Value.GetString();
+                sourceCode = TranslateIdentifierOrConstant(sourceCode, argIterator.Current);
             while (argIterator.MoveNext())
-                sourceCode += $", {argIterator.Current.Value.GetString()}";
+            {
+                sourceCode += ", ";
+                sourceCode = TranslateIdentifierOrConstant(sourceCode, argIterator.Current);
+            }
             sourceCode += ")";
             return sourceCode;
         }
@@ -141,6 +135,24 @@ namespace PythonCSharpTranslator
             return AddLine(sourceCode, line, nestingLevel);
         }
 
+        private static string TranslateIfStatement(string sourceCode, IfStatement ifStatement, int nestingLevel)
+        {
+            string line = "if ";
+            line = TranslateBracketExpression(line, ifStatement.Condition);
+            sourceCode = AddLine(sourceCode, line, nestingLevel, false);
+            sourceCode = TranslateBlock(sourceCode, ifStatement.Statements, nestingLevel);
+            return sourceCode;
+        }
+
+        private static string TranslateWhileStatement(string sourceCode, WhileLoop whileLoop, int nestingLevel)
+        {
+            string line = "while ";
+            line = TranslateBracketExpression(line, whileLoop.Condition);
+            sourceCode = AddLine(sourceCode, line, nestingLevel, false);
+            sourceCode = TranslateBlock(sourceCode, whileLoop.Statements, nestingLevel);
+            return sourceCode;
+        }
+
         private static string TranslateForLoop(string sourceCode, ForLoop forLoop, int nestingLevel)
         {
             sourceCode = AddLine(
@@ -151,21 +163,52 @@ namespace PythonCSharpTranslator
             sourceCode = TranslateBlock(sourceCode, forLoop.Statements, nestingLevel);
             return sourceCode;
         }
+
+        private static string TranslateRValue(string sourceCode, RValue rValue)
+        {
+            if (rValue.Type == RValue.RValueType.FunCall)
+                sourceCode = TranslateFunctionCall(sourceCode, rValue.GetFunCall());
+            else if (rValue.Type == RValue.RValueType.Value)
+                sourceCode = TranslateIdentifierOrConstant(sourceCode, rValue.GetValue());
+            else
+                sourceCode = TranslateBracketExpression(sourceCode, rValue.GetLogicalExpression());
+            return sourceCode;
+        }
+
+        private static string TranslateBracketExpression(string sourceCode, List<Token> tokens)
+        {
+            if (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis)
+                sourceCode += "(";
+            foreach (var token in tokens)
+            {
+                if (token.Type == TokenType.StringLiteral)
+                    sourceCode += $"\"{token.Value.GetString()}\"";
+                else if (token.IsUnaryOperator())
+                    sourceCode += $" {token.Value.GetString()} ";
+                else if (token.Type == TokenType.LeftParenthesis || token.Type == TokenType.RightParenthesis)
+                    sourceCode += token.Value.GetString();
+                else
+                    sourceCode = TranslateIdentifierOrConstant(sourceCode, token);
+            }
+            if (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis)
+                sourceCode += ")";
+            return sourceCode;
+        }
         
         
-        private static string TranslateIdentifierOrConstant(string line, Token token)
+        private static string TranslateIdentifierOrConstant(string sourceCode, Token token)
         {
             if (token.Type == TokenType.Identifier)
-                line += token.Value.GetString();
+                sourceCode += token.Value.GetString();
             else if (token.Value.Type == typeof(bool))
-                line += token.Value.GetBool() ? "true" : "false";
+                sourceCode += token.Value.GetBool() ? "true" : "false";
             else if (token.Value.Type == typeof(string))
-                line += $"\"{token.Value.GetString()}\"";
+                sourceCode += $"\"{token.Value.GetString()}\"";
             else if (token.Value.Type == typeof(double))
-                line += token.Value.GetDouble();
+                sourceCode += token.Value.GetDouble();
             else if (token.Value.Type == typeof(int))
-                line += token.Value.GetInt();
-            return line;
+                sourceCode += token.Value.GetInt();
+            return sourceCode;
         }
 
         private static string TranslateFunctionArg(string sourceCode, Tuple<string, TokenType> arg)
@@ -202,37 +245,50 @@ namespace PythonCSharpTranslator
         private static string TranslateBlock(string sourceCode, List<Statement> statements, int nestingLevel)
         {
             sourceCode = AddLine(sourceCode, "{", nestingLevel, false);
-            // statements
             foreach (var statement in statements)
             {
-                var t = typeof(int);
                 switch (statement.Type)
                 {
                     case ReturnStatementType:
                         sourceCode = TranslateReturnStatement(sourceCode, (ReturnStatement) statement, nestingLevel + 1);
                         break;
-                    case AssignmentStatementType:
-                        sourceCode = TranslateAssignment(sourceCode, (AssignmentStatement) statement, nestingLevel + 1);
-                        break;
-                    case VariableDefType:
-                        sourceCode = TranslateVariableDef(sourceCode, (VariableDef) statement, nestingLevel + 1);
-                        break;
                     default:
-                        throw new TranslationError($"{statement.Type} should not appear inside a function definition!");
+                        sourceCode = TranslateTypesThatCanOccurOnEveryNestingLevel(sourceCode, statement, nestingLevel + 1);
+                        break;
                 }
             }
             sourceCode = AddLine(sourceCode, "}", nestingLevel, false);
             return sourceCode;
         }
 
-        
-        
-
-        public static void Save(string translatedProgram, string filepath)
+        private static string TranslateTypesThatCanOccurOnEveryNestingLevel(string sourceCode, Statement statement,
+            int nestingLevel)
         {
-            var writer = new StreamWriter(filepath);
-            writer.Write(translatedProgram);
-            writer.Close();
+            switch (statement.Type)
+            {
+                case FunctionCallType:
+                    sourceCode = AddLine(sourceCode,
+                        TranslateFunctionCall("", (FunctionCall) statement), nestingLevel);
+                    break;
+                case AssignmentStatementType:
+                    sourceCode = TranslateAssignment(sourceCode, (AssignmentStatement) statement, nestingLevel);
+                    break;
+                case VariableDefType:
+                    sourceCode = TranslateVariableDef(sourceCode, (VariableDef) statement, nestingLevel);
+                    break;
+                case IfStatementType:
+                    sourceCode = TranslateIfStatement(sourceCode, (IfStatement) statement, nestingLevel);
+                    break;
+                case ForLoopType:
+                    sourceCode = TranslateForLoop(sourceCode, (ForLoop) statement, nestingLevel);
+                    break;
+                case WhileLoopType:
+                    sourceCode = TranslateWhileStatement(sourceCode, (WhileLoop) statement, nestingLevel);
+                    break;
+                default:
+                    throw new TranslationError($"{statement.Type} should not appear inside a nested code block definition!");
+            }
+            return sourceCode;
         }
 
         private static string AddLine(string sourceCode, string line, int nestingLevel, bool endWithColon = true)

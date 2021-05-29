@@ -13,6 +13,7 @@ namespace PythonCSharpTranslator
         FunctionDefType,
         AssignmentStatementType,
         VariableDefType,
+        ConstantDefType,
         ReturnStatementType,
         BadStatementType
     }
@@ -31,6 +32,7 @@ namespace PythonCSharpTranslator
             return $"{indent}{Type}";
         }
     }
+    
 
     public class BlockStatement : Statement
     {
@@ -67,6 +69,17 @@ namespace PythonCSharpTranslator
             Type = StatementType.AssignmentStatementType;
         }
     
+        public string LeftSide;
+        public RValue RightSide = new();
+    }
+
+    public class ConstantDef : Statement
+    {
+        public ConstantDef()
+        {
+            Type = StatementType.ConstantDefType;
+        } 
+        
         public string LeftSide;
         public RValue RightSide = new();
     }
