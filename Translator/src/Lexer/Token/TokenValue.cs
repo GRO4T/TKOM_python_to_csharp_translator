@@ -5,6 +5,8 @@ namespace PythonCSharpTranslator
     public class TokenValue
     {
         public object Value { get; private set; }
+        public Type Type;
+        
 
         public TokenValue()
         {
@@ -51,21 +53,25 @@ namespace PythonCSharpTranslator
         public void SetInt(int value)
         {
             Value = value;
+            Type = value.GetType();
         }
 
         public void SetDouble(double value)
         {
             Value = value;
+            Type = value.GetType();
         }
 
         public void SetString(string s)
         {
             Value = s;
+            Type = s.GetType();
         }
 
         public void SetBool(bool value)
         {
             Value = value;
+            Type = value.GetType();
         }
         
         public void AddInt(int value)

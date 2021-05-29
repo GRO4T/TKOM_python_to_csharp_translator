@@ -474,44 +474,48 @@ namespace PythonCSharpTranslator
                 statement = CreateBadStatement("Expected newline");
                 return false;
             }
-            for (int i = 0; i < nestingLevel; i++)
-            {
-                GetToken();
-                if (_currentToken.Type != TabToken)
-                {
-                    if (i != 0)
-                        statement = CreateBadStatement("Indentation error");
-                    return i == 0;
-                }
-            }
-            GetToken();
-            statement = GetNextStatement(nestingLevel);
-            if (statement.Type == BadStatementType)
-                return false;
-            statements.Add(statement);
-            if (!IsNewlineOrEnd(_currentToken)) return false;
-            while (true)
+            if (_currentToken.Type == NewlineToken)
             {
                 for (int i = 0; i < nestingLevel; i++)
                 {
                     GetToken();
                     if (_currentToken.Type != TabToken)
                     {
-                        if (i != 0)
+                        if (i > 1)
                             statement = CreateBadStatement("Indentation error");
-                        return i == 0;
+                        return i == 0 || i == nestingLevel - 1;
                     }
                 }
                 GetToken();
+            }
+            statement = GetNextStatement(nestingLevel);
+            if (statement == null)
+                return true;
+            if (statement.Type == BadStatementType)
+                return false;
+            statements.Add(statement);
+            while (true)
+            {
+                if (_currentToken.Type == NewlineToken)
+                {
+                    for (int i = 0; i < nestingLevel; i++)
+                    {
+                        GetToken();
+                        if (_currentToken.Type != TabToken)
+                        {
+                            if (i > 1)
+                                statement = CreateBadStatement("Indentation error");
+                            return i == 0 || i == nestingLevel - 1;
+                        }
+                    }
+                    GetToken();
+                }
                 statement = GetNextStatement(nestingLevel);
+                if (statement == null)
+                    return true;
                 if (statement.Type == BadStatementType)
                     return false;
                 statements.Add(statement);
-                if (!IsNewlineOrEnd(_currentToken))
-                {
-                    statement = CreateBadStatement("Expected newline or EOF");
-                    return false;
-                }
             }
         }
 
@@ -531,11 +535,6 @@ namespace PythonCSharpTranslator
         private Statement CreateBadStatement(string desc)
         {
             return new BadStatement {BadToken = _currentToken, Description = desc};
-        }
-
-        private static bool IsNewlineOrEnd(Token token)
-        {
-            return (token.Type == NewlineToken || token.Type == End);
         }
         
         private static bool IsParameter(Token token)
