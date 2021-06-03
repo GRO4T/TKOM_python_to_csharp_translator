@@ -272,7 +272,7 @@ namespace PythonCSharpTranslator
         private Statement ParseVarDefOrAssign()
         {
             GetToken();
-            if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant, Identifier, LeftParenthesis}).Contains(
+            if (((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant, Identifier, LeftParenthesis, NotToken}).Contains(
                 _currentToken.Type))
                 return ParseAssignment();
             if (((IList) new[] {IntToken, BoolToken, StrToken, FloatToken}).Contains(_currentToken.Type))
@@ -432,7 +432,7 @@ namespace PythonCSharpTranslator
                         return false;
                     }
                     type = RValue.RValueType.LogicalExpression;
-                    if (lastToken.Type != LeftParenthesis && !lastToken.IsUnaryOperator())
+                    if (lastToken.Type != LeftParenthesis && !lastToken.IsUnaryOperator() && lastToken.Type != AssignmentSymbol)
                     {
                         statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                         return false;

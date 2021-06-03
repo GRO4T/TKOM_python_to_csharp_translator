@@ -34,7 +34,7 @@ namespace PythonCSharpTranslator
         private bool IsTokenSeparator()
         {
             return _sourceEnd || 
-                   ((IList) new[] {' ', '\n', '(', ')', ':', '\r', ',', '+', '-', '*', '/'}).Contains(_lastCharacter);
+                   ((IList) new[] {' ', '\n', '(', ')', ':', '\r', ',', '+', '-', '*', '/', '=', '!'}).Contains(_lastCharacter);
         }
 
         public int GetLineNumber()

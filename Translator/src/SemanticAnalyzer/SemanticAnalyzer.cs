@@ -84,6 +84,8 @@ namespace PythonCSharpTranslator
             if (statement.GetName() == null)
             {
                 EvaluateIsIfStatement(statement, context); 
+                EvaluateWhileLoop(statement, context);
+                EvaluateForLoop(statement, context);
             }
         }
 
@@ -203,6 +205,27 @@ namespace PythonCSharpTranslator
             }
         }
 
+        private void EvaluateWhileLoop(Statement statement, Context context)
+        {
+            if (statement.Type == WhileLoopType)
+            {
+                var whileLoop = (WhileLoop) statement;
+                EvaluateLogicalExpression(whileLoop.Condition, context); 
+                EvaluateBlock(whileLoop.Statements, context);
+            }
+        }
+
+        private void EvaluateForLoop(Statement statement, Context context)
+        {
+            if (statement.Type == ForLoopType)
+            {
+                var forLoop = (ForLoop) statement;
+                var localContext = new Context(context);
+                localContext.SymbolTable[forLoop.IteratorName] = new VariableDef {VariableType = TokenType.IntToken};
+                EvaluateBlock(forLoop.Statements, localContext);
+            }
+        }
+
         private TokenType EvaluateArithmeticExpression(List<Token> expression, Context context)
         {
             TokenType expressionType = TokenType.UnknownToken;
@@ -263,19 +286,19 @@ namespace PythonCSharpTranslator
 
         private void EvaluateBlock(List<Statement> statements, Context context)
         {
-            foreach (var statement in statements)
+            for (int i = 0; i < statements.Count; i++)
             {
                 var localContext = new Context(context);
-                EvaluateStatement(statement, ref localContext);
-                if (statement.Type == ReturnStatementType)
+                statements[i] = EvaluateStatement(statements[i], ref localContext);
+                if (statements[i].Type == ReturnStatementType)
                 {
-                    var returnStatement = (ReturnStatement) statement;
+                    var returnStatement = (ReturnStatement) statements[i];
                     var foundType = EvaluateRValue(new RValue(returnStatement.Value), context).ValueType;
                     if (context.ReturnType == null)
-                        throw new TranslationError($"Function should not return a value", statement.LineNumber);
+                        throw new TranslationError($"Function should not return a value", statements[i].LineNumber);
                     if (foundType != context.ReturnType)
                         throw new TranslationError(
-                            $"Wrong return type. Got {foundType}. Expected {context.ReturnType}", statement.LineNumber);
+                            $"Wrong return type. Got {foundType}. Expected {context.ReturnType}", statements[i].LineNumber);
                 }
             }
         }
