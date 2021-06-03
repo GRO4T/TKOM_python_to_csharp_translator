@@ -36,11 +36,11 @@ namespace PythonCSharpTranslator
         {
              statements.Sort(delegate(Statement a, Statement b)
              {
-                 if (a.Type == b.Type)
-                     return 0;
-                 if (a.Type == FunctionDefType)
+                 if (a.Type == FunctionDefType && b.Type != FunctionDefType)
                      return -1;
-                 return 1;
+                 if (a.Type != FunctionDefType && b.Type == FunctionDefType)
+                     return 1;
+                 return 0;
              });
         }
 
@@ -181,13 +181,13 @@ namespace PythonCSharpTranslator
             else if (rValue.Type == RValue.RValueType.Value)
                 sourceCode = TranslateIdentifierOrConstant(sourceCode, rValue.GetValue());
             else
-                sourceCode = TranslateBracketExpression(sourceCode, rValue.GetLogicalExpression());
+                sourceCode = TranslateBracketExpression(sourceCode, rValue.GetLogicalExpression(), false);
             return sourceCode;
         }
 
-        private static string TranslateBracketExpression(string sourceCode, List<Token> tokens)
+        private static string TranslateBracketExpression(string sourceCode, List<Token> tokens, bool addBrackets = true)
         {
-            if (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis)
+            if (addBrackets && (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis))
                 sourceCode += "(";
             foreach (var token in tokens)
             {
@@ -195,12 +195,12 @@ namespace PythonCSharpTranslator
                     sourceCode += $"\"{token.Value.GetString()}\"";
                 else if (token.IsUnaryOperator())
                     sourceCode += $" {token.Value.GetString()} ";
-                else if (token.Type == TokenType.LeftParenthesis || token.Type == TokenType.RightParenthesis)
-                    sourceCode += token.Value.GetString();
-                else
+                else if (token.IsParameter())
                     sourceCode = TranslateIdentifierOrConstant(sourceCode, token);
+                else
+                    sourceCode += token.Value.GetString();
             }
-            if (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis)
+            if (addBrackets && (tokens[0].Type != TokenType.LeftParenthesis || tokens[^1].Type != TokenType.RightParenthesis))
                 sourceCode += ")";
             return sourceCode;
         }

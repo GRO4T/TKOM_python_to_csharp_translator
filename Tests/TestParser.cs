@@ -80,6 +80,7 @@ namespace Tests
         [InlineData("Resources/logical_expression2.py", AssignmentStatementType)]
         [InlineData("Resources/logical_expression3.py", AssignmentStatementType)]
         [InlineData("Resources/logical_expression4.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression5.py", AssignmentStatementType)]
         [InlineData("Resources/logical_expression_bad1.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad2.py", BadStatementType)]
         [InlineData("Resources/logical_expression_bad3.py", BadStatementType)]

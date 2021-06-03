@@ -117,8 +117,87 @@ namespace PythonCSharpTranslator
                         }
                     }
                     break;
+                case RValue.RValueType.FunCall:
+                    var funCall = rValue.GetFunCall();
+                    EvaluateFunctionCall(funCall);
+                    var returnType = ((FunctionDef) _symbolTable[funCall.Name]).ReturnType;
+                    if (returnType != null)
+                        rValue.ValueType = (TokenType) returnType;
+                    break;
+                case RValue.RValueType.ArithmeticExpression:
+                    rValue.ValueType = EvaluateArithmeticExpression(rValue.GetArithmeticExpression());
+                    break;
+                case RValue.RValueType.LogicalExpression:
+                    EvaluateLogicalExpression(rValue.GetLogicalExpression());
+                    rValue.ValueType = TokenType.BoolToken;
+                    break;
             }
+            
             return rValue;
+        }
+
+        private void EvaluateLogicalExpression(List<Token> expression)
+        {
+            var tokenIterator = expression.GetEnumerator();
+            while (tokenIterator.MoveNext())
+            {
+                var token = tokenIterator.Current;
+                if (token.IsParameter())
+                {
+                    EvaluateRValue(new RValue(token));
+                }
+                else if (token.Type == TokenType.NotToken)
+                {
+                    if (!tokenIterator.MoveNext())
+                        throw new TranslationError("Found not token but nothing after it");
+                    var rvalue = EvaluateRValue(new RValue(tokenIterator.Current));
+                    if (rvalue.ValueType != TokenType.BoolToken)
+                        throw new TranslationError("Cannot negate non-boolean value");
+                }
+            }
+        }
+
+        private TokenType EvaluateArithmeticExpression(List<Token> expression)
+        {
+            TokenType expressionType = TokenType.UnknownToken;
+            foreach (var token in expression)
+            {
+                if (token.IsParameter())
+                {
+                    var rvalue = EvaluateRValue(new RValue(token));
+                    if (expressionType == TokenType.UnknownToken)
+                        expressionType = rvalue.ValueType;
+                    else if (rvalue.ValueType != expressionType)
+                        throw new TranslationError("Cannot determine arithmetic expression type",
+                            _parser.GetLineNumber());
+                }
+            }
+            return expressionType;
+        }
+
+        private void EvaluateFunctionCall(FunctionCall functionCall)
+        {
+            if (!_symbolTable.ContainsKey(functionCall.Name))
+                throw new TranslationError($"Function {functionCall.Name} not declared", _parser.GetLineNumber());
+            else
+            {
+                var symbol = _symbolTable[functionCall.Name];
+                if (symbol.Type != FunctionDefType)
+                    throw new TranslationError($"Symbol declared as {symbol.Type} but used as {functionCall.Type}", _parser.GetLineNumber());
+                var functionDef = (FunctionDef) symbol;
+                if (functionCall.Args.Count != functionDef.ArgList.Count)
+                    throw new TranslationError($"Number of arguments does not match", _parser.GetLineNumber());
+                for (int i = 0; i < functionCall.Args.Count; i++)
+                {
+                    var gotToken = functionCall.Args[i];
+                    var expectedType = functionDef.ArgList[i].Item2;
+                    EvaluateRValue(new RValue(gotToken));
+                    var gotTokenType = gotToken.IsConstantValue() ? EvaluateConstantType(gotToken.Type) : gotToken.Type;
+                    if (gotTokenType != expectedType)
+                        throw new TranslationError(
+                            $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}", _parser.GetLineNumber());
+                }
+            }
         }
         
          

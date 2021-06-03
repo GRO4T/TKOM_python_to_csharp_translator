@@ -1,6 +1,8 @@
-﻿def hello():
-    return True
+﻿def hello(x: str) -> int:
+    return 1
 
-y = float(2.5)
 x = int(1)
-x = y
+x = hello("123")
+x = (x + 1) * 2 / 4
+y = bool(True)
+y = not 1

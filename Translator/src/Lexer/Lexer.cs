@@ -181,11 +181,11 @@ namespace PythonCSharpTranslator
                 case 'd':
                     return TryParseSequence("def") ? CreateToken(DefToken) : ParseIdentifier();
                 case 'n':
-                    return TryParseSequence("not") ? CreateToken(NotToken) : ParseIdentifier();
+                    return TryParseSequence("not") ? CreateToken(NotToken, new TokenValue("!")) : ParseIdentifier();
                 case 'o':
-                    return TryParseSequence("or") ? CreateToken(OrToken) : ParseIdentifier();
+                    return TryParseSequence("or") ? CreateToken(OrToken, new TokenValue("||")) : ParseIdentifier();
                 case 'a':
-                    return TryParseSequence("and") ? CreateToken(AndToken) : ParseIdentifier();
+                    return TryParseSequence("and") ? CreateToken(AndToken, new TokenValue("&&")) : ParseIdentifier();
                 case 'w':
                     return TryParseSequence("while") ? CreateToken(WhileToken) : ParseIdentifier();
                 case 'T':

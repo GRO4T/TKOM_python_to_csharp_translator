@@ -16,6 +16,13 @@ namespace PythonCSharpTranslator
             ArithmeticExpression,
             Undefined
         }
+        
+        public RValue() {}
+
+        public RValue(Token value)
+        {
+            SetValue(value);
+        }
 
         public bool IsConstantValue()
         {

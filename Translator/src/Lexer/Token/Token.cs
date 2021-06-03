@@ -42,6 +42,12 @@ namespace PythonCSharpTranslator
         {
             return $"{Type}:{Value}";
         }
+
+        public bool IsConstantValue()
+        {
+            return ((IList) new[] {IntegerConstant, DecimalConstant, StringLiteral, LogicalConstant})
+                            .Contains(Type);
+        }
         
         public bool IsParameter()
         {
