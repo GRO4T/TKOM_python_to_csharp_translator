@@ -218,10 +218,10 @@ namespace Tests
             {
                 tokens.Add(token.Type); 
             }
-            Assert.Equal(tokens.Count, expectedTokens.Length);
+            Assert.Equal(expectedTokens.Length, tokens.Count);
             for (int i = 0; i < expectedTokens.Length; i++)
             {
-                Assert.Equal(tokens[i], expectedTokens[i]);
+                Assert.Equal( expectedTokens[i], tokens[i]);
             }
         }
     }

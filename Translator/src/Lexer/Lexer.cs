@@ -47,7 +47,7 @@ namespace PythonCSharpTranslator
             _tokenValue = new TokenValue();
             var token = ParseIndentOrSkipWhites();
             if (token != null) return token;
-            if (_lastCharacter == '#')
+            while (_lastCharacter == '#')
                 SkipCommentLine();
             if (_sourceEnd)
                 return CreateToken(End);

@@ -10,9 +10,9 @@ namespace PythonCSharpTranslator
     public class Parser
     {
         private readonly ITokenSource _tokenSource;
-        private Token _currentToken = null;
+        private Token _currentToken;
         private List<Token> _tokens;
-        public bool SourceEnd = false;
+        public bool SourceEnd;
         
         public Parser(ITokenSource tokenSource)
         {
@@ -31,19 +31,19 @@ namespace PythonCSharpTranslator
                 GetToken(false);
             _tokens.Add(_currentToken);
             int lineNumber = _currentToken.LineNumber;
-            Statement? s;
-            if ((s = ParseFuncCallOrVarDefOrAssign()) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
-            if ((s = ParseIfStatement(nestingLevel)) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
-            if ((s = ParseWhileLoop(nestingLevel)) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
-            if ((s = ParseForLoop(nestingLevel)) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
-            if ((s = ParseFunctionDef(nestingLevel)) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
-            if ((s = ParseReturnStatement()) != null)
-                return AddLineNumberAndReturn(s, lineNumber);
+            Statement? statement;
+            if ((statement = ParseFuncCallOrVarDefOrAssign()) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
+            if ((statement = ParseIfStatement(nestingLevel)) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
+            if ((statement = ParseWhileLoop(nestingLevel)) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
+            if ((statement = ParseForLoop(nestingLevel)) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
+            if ((statement = ParseFunctionDef(nestingLevel)) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
+            if ((statement = ParseReturnStatement()) != null)
+                return AddLineNumberAndReturn(statement, lineNumber);
             if (IsEnd())
                 return null;
             return CreateBadStatement("Cannot recognize statement");
