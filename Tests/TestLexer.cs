@@ -165,12 +165,12 @@ namespace Tests
         [InlineData("Resources/int_value_then_float_value.py", new[]
         {
             Identifier, AssignmentSymbol, IntegerConstant, NewlineToken,
-            Identifier, AssignmentSymbol, DecimalConstant
+            Identifier, AssignmentSymbol, DecimalConstant, NewlineToken
         })]
         [InlineData("Resources/function.py", new[]
         {
             DefToken, Identifier, LeftParenthesis, Identifier, Colon, IntToken, RightParenthesis, Arrow,
-            FloatToken, Colon, NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant 
+            FloatToken, Colon, NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant, NewlineToken 
         })]
         public void ParseBlock(string filename, TokenType[] expectedTokens)
         {

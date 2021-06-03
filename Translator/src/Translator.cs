@@ -164,6 +164,16 @@ namespace PythonCSharpTranslator
             return sourceCode;
         }
 
+        private static string TranslateConstantDef(string sourceCode, ConstantDef constantDef, int nestingLevel)
+        {
+            string line = "const ";
+            line = TranslateVarType(line, constantDef.ConstantType);
+            line += $" {constantDef.Name} = ";
+            line = TranslateIdentifierOrConstant(line, constantDef.RightSide.GetValue());
+            sourceCode = AddLine(sourceCode, line, nestingLevel);
+            return sourceCode;
+        }
+
         private static string TranslateRValue(string sourceCode, RValue rValue)
         {
             if (rValue.Type == RValue.RValueType.FunCall)
@@ -285,8 +295,11 @@ namespace PythonCSharpTranslator
                 case WhileLoopType:
                     sourceCode = TranslateWhileStatement(sourceCode, (WhileLoop) statement, nestingLevel);
                     break;
+                case ConstantDefType:
+                    sourceCode = TranslateConstantDef(sourceCode, (ConstantDef) statement, nestingLevel);
+                    break;
                 default:
-                    throw new TranslationError($"{statement.Type} should not appear inside a nested code block definition!");
+                    throw new TranslationError($"{statement.Type} should not appear inside a nested code block!");
             }
             return sourceCode;
         }

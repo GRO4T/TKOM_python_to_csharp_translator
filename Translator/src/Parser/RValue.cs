@@ -7,6 +7,7 @@ namespace PythonCSharpTranslator
     {
         public RValueType Type = RValueType.Undefined;
         private object _value;
+        public TokenType ValueType = TokenType.UnknownToken;
         public enum RValueType
         {
             FunCall,
@@ -14,6 +15,11 @@ namespace PythonCSharpTranslator
             LogicalExpression,
             ArithmeticExpression,
             Undefined
+        }
+
+        public bool IsConstantValue()
+        {
+            return Type == RValueType.Value && ((Token) _value).Type != TokenType.Identifier;
         }
 
         public void SetFunCall(FunctionCall functionCall)

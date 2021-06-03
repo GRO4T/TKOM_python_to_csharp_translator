@@ -31,8 +31,12 @@ namespace PythonCSharpTranslator
                 indent += '\t';
             return $"{indent}{Type}";
         }
+
+        public virtual string GetName()
+        {
+            return null;
+        }
     }
-    
 
     public class BlockStatement : Statement
     {
@@ -57,6 +61,11 @@ namespace PythonCSharpTranslator
             Type = StatementType.FunctionDefType;
         }
 
+        public override string GetName()
+        {
+            return Name;
+        }
+
         public string Name;
         public TokenType? ReturnType = null;
         public List<Tuple<string, TokenType>> ArgList = new();
@@ -68,6 +77,11 @@ namespace PythonCSharpTranslator
         {
             Type = StatementType.AssignmentStatementType;
         }
+        
+        public override string GetName()
+        {
+            return LeftSide;
+        }
     
         public string LeftSide;
         public RValue RightSide = new();
@@ -78,10 +92,16 @@ namespace PythonCSharpTranslator
         public ConstantDef()
         {
             Type = StatementType.ConstantDefType;
-        } 
+        }
         
-        public string LeftSide;
+        public override string GetName()
+        {
+            return Name;
+        }
+        
+        public string Name;
         public RValue RightSide = new();
+        public TokenType ConstantType;
     }
 
     public class VariableDef : Statement
@@ -89,6 +109,11 @@ namespace PythonCSharpTranslator
         public VariableDef()
         {
             Type = StatementType.VariableDefType;
+        }
+        
+        public override string GetName()
+        {
+            return Name;
         }
 
         public String Name;
@@ -121,6 +146,11 @@ namespace PythonCSharpTranslator
         public FunctionCall()
         {
             Type = StatementType.FunctionCallType;
+        }
+        
+        public override string GetName()
+        {
+            return Name;
         }
 
         public String Name;

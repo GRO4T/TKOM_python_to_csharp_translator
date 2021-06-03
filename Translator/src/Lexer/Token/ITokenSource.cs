@@ -3,5 +3,6 @@
     public interface ITokenSource
     {
         Token GetNextToken();
+        int GetLineNumber();
     }
 }

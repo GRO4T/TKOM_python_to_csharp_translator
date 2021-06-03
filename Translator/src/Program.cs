@@ -20,7 +20,7 @@ namespace PythonCSharpTranslator
                 new SemanticAnalyzer(
                     new Parser(
                         new Lexer(
-                            new FileCharacterSource("Resources/input.py")
+                            new FileCharacterSource("Resources/input_dev.py")
                         )
                     )
                 );

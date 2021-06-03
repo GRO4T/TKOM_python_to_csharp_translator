@@ -37,6 +37,11 @@ namespace PythonCSharpTranslator
                    ((IList) new[] {' ', '\n', '(', ')', ':', '\r', ',', '+', '-', '*', '/'}).Contains(_lastCharacter);
         }
 
+        public int GetLineNumber()
+        {
+            return _source.GetLineNumber();
+        }
+
         public Token GetNextToken()
         {
             _tokenValue = new TokenValue();

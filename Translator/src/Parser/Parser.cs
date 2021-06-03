@@ -23,6 +23,11 @@ namespace PythonCSharpTranslator
         {
             return SourceEnd;
         }
+
+        public int GetLineNumber()
+        {
+            return _tokenSource.GetLineNumber();
+        }
         public Statement? GetNextStatement(int nestingLevel = 0)
         {
             _tokens = new List<Token>();
@@ -346,15 +351,15 @@ namespace PythonCSharpTranslator
             GetToken();
             if (_currentToken.Type != Identifier)
             {
-                switch (_currentToken.Type)
+                switch (varDef.VariableType)
                 {
-                    case IntegerConstant: if (varDef.VariableType != IntToken) return CreateBadStatement("Should be an integer");
+                    case IntToken: if (_currentToken.Type != IntegerConstant) return CreateBadStatement("Should be an integer");
                         break;
-                    case DecimalConstant: if (varDef.VariableType != FloatToken) return CreateBadStatement("Should be a float value");
+                    case FloatToken: if (_currentToken.Type != DecimalConstant) return CreateBadStatement("Should be a float value");
                         break;
-                    case LogicalConstant: if (varDef.VariableType != BoolToken) return CreateBadStatement("Should be a logical value");
+                    case BoolToken: if (_currentToken.Type != LogicalConstant) return CreateBadStatement("Should be a logical value");
                         break;
-                    case StringLiteral: if (varDef.VariableType != StrToken) return CreateBadStatement("Should be of string type");
+                    case StrToken: if (_currentToken.Type != StringLiteral) return CreateBadStatement("Should be of string type");
                         break;
                     default:
                         return CreateBadStatement("Declared and assigned type not matching");
