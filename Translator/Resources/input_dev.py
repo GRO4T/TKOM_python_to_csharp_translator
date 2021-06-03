@@ -1,5 +1,6 @@
 ﻿def hello(x: str) -> int:
     return 1
+    x = x + 1
 
 x = int(1)
 x = hello("123")

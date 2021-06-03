@@ -24,9 +24,12 @@ namespace PythonCSharpTranslator
         
         public Statement EvaluateNextStatement()
         {
-            var statement = _parser.GetNextStatement();
+            return EvaluateStatement(_parser.GetNextStatement());
+        }
+
+        private Statement EvaluateStatement(Statement statement)
+        {
             if (statement == null) return statement;
-            // check bad statement
             if (statement.Type == BadStatementType)
             {
                 Log.Error(statement.ToString());
@@ -48,7 +51,7 @@ namespace PythonCSharpTranslator
                 {
                     if (statement.Type == VariableDefType || statement.Type == FunctionDefType)
                     {
-                        throw new TranslationError($"Symbol {name} already declared", _parser.GetLineNumber());
+                        throw new TranslationError($"Symbol {name} already declared", statement.LineNumber);
                     }
                     EvaluateIfAssignmentAndSymbolDeclared(statement, _symbolTable[name]);
                 }
@@ -57,8 +60,10 @@ namespace PythonCSharpTranslator
                     EvaluateIfAssignmentAndNotDeclared(ref statement);
                     if (statement.Type == FunctionCallType)
                     {
-                        throw new TranslationError($"Function {name} not declared", _parser.GetLineNumber());
+                        throw new TranslationError($"Function {name} not declared", statement.LineNumber);
                     }
+                    if (statement.Type == FunctionDefType)
+                        EvaluateFunctionDef((FunctionDef) statement);
                     _symbolTable.Add(name, statement);
                 }
             }
@@ -77,7 +82,7 @@ namespace PythonCSharpTranslator
             if (statement.Type == AssignmentStatementType)
             {
                 if (declaredAs.Type == ConstantDefType)
-                    throw new TranslationError($"Cannot modify constant", _parser.GetLineNumber());
+                    throw new TranslationError($"Cannot modify constant", statement.LineNumber);
                 else if (declaredAs.Type == VariableDefType)
                 {
                     var variableDef = (VariableDef) declaredAs;
@@ -89,7 +94,7 @@ namespace PythonCSharpTranslator
                 }
                 else
                     throw new TranslationError(
-                        $"Cannot modify symbol at {_parser.GetLineNumber()}. First declared as {declaredAs.Type}");
+                        $"Cannot modify symbol at {statement.LineNumber}. First declared as {declaredAs.Type}");
             }
         }
 
@@ -110,7 +115,7 @@ namespace PythonCSharpTranslator
                 }
                 else
                 {
-                    throw new TranslationError($"Variable {assignmentStatement.LeftSide} not declared", _parser.GetLineNumber());
+                    throw new TranslationError($"Variable {assignmentStatement.LeftSide} not declared", statement.LineNumber);
                 }
             }
         }
@@ -127,8 +132,7 @@ namespace PythonCSharpTranslator
                         var identifierName = rValue.GetValue().Value.GetString();
                         Log.Debug(identifierName);
                         if (!_symbolTable.ContainsKey(identifierName))
-                            throw new TranslationError($"Symbol {identifierName} not declared",
-                                _parser.GetLineNumber());
+                            throw new TranslationError($"Symbol {identifierName} not declared");
                         else
                         {
                             var symbol = _symbolTable[identifierName];
@@ -190,8 +194,7 @@ namespace PythonCSharpTranslator
                     if (expressionType == TokenType.UnknownToken)
                         expressionType = rvalue.ValueType;
                     else if (rvalue.ValueType != expressionType)
-                        throw new TranslationError("Cannot determine arithmetic expression type",
-                            _parser.GetLineNumber());
+                        throw new TranslationError("Cannot determine arithmetic expression type");
                 }
             }
             return expressionType;
@@ -200,15 +203,15 @@ namespace PythonCSharpTranslator
         private void EvaluateFunctionCall(FunctionCall functionCall)
         {
             if (!_symbolTable.ContainsKey(functionCall.Name))
-                throw new TranslationError($"Function {functionCall.Name} not declared", _parser.GetLineNumber());
+                throw new TranslationError($"Function {functionCall.Name} not declared", functionCall.LineNumber);
             else
             {
                 var symbol = _symbolTable[functionCall.Name];
                 if (symbol.Type != FunctionDefType)
-                    throw new TranslationError($"Symbol declared as {symbol.Type} but used as {functionCall.Type}", _parser.GetLineNumber());
+                    throw new TranslationError($"Symbol declared as {symbol.Type} but used as {functionCall.Type}", functionCall.LineNumber);
                 var functionDef = (FunctionDef) symbol;
                 if (functionCall.Args.Count != functionDef.ArgList.Count)
-                    throw new TranslationError($"Number of arguments does not match", _parser.GetLineNumber());
+                    throw new TranslationError($"Number of arguments does not match", functionCall.LineNumber);
                 for (int i = 0; i < functionCall.Args.Count; i++)
                 {
                     var gotToken = functionCall.Args[i];
@@ -217,16 +220,26 @@ namespace PythonCSharpTranslator
                     var gotTokenType = gotToken.IsConstantValue() ? EvaluateConstantType(gotToken.Type) : gotToken.Type;
                     if (gotTokenType != expectedType)
                         throw new TranslationError(
-                            $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}", _parser.GetLineNumber());
+                            $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}", functionCall.LineNumber);
                 }
             }
         }
 
         private void EvaluateFunctionDef(FunctionDef functionDef)
         {
-            if (!_symbolTable.ContainsKey(functionDef.Name))
-                throw new TranslationError($"Symbol {functionDef.Name} already declared");
-            
+            foreach (var statement in functionDef.Statements)
+            {
+                EvaluateStatement(statement);
+                if (statement.Type == ReturnStatementType)
+                {
+                    var returnStatement = (ReturnStatement) statement;
+                    var returnType = EvaluateRValue(new RValue(returnStatement.Value)).ValueType;
+                    if (returnType != functionDef.ReturnType)
+                        throw new TranslationError(
+                            $"Wrong return type. Got {returnType}. Expected {functionDef.ReturnType}");
+                }
+                    
+            }
         }
         
         private static TokenType EvaluateConstantType(TokenType tokenType)

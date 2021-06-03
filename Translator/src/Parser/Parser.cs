@@ -24,32 +24,35 @@ namespace PythonCSharpTranslator
             return SourceEnd;
         }
 
-        public int GetLineNumber()
-        {
-            return _tokenSource.GetLineNumber();
-        }
         public Statement? GetNextStatement(int nestingLevel = 0)
         {
             _tokens = new List<Token>();
             while (_currentToken == null || _currentToken.Type == NewlineToken)
                 GetToken(false);
             _tokens.Add(_currentToken);
+            int lineNumber = _currentToken.LineNumber;
             Statement? s;
             if ((s = ParseFuncCallOrVarDefOrAssign()) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if ((s = ParseIfStatement(nestingLevel)) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if ((s = ParseWhileLoop(nestingLevel)) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if ((s = ParseForLoop(nestingLevel)) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if ((s = ParseFunctionDef(nestingLevel)) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if ((s = ParseReturnStatement()) != null)
-                return s;
+                return AddLineNumberAndReturn(s, lineNumber);
             if (IsEnd())
                 return null;
             return CreateBadStatement("Cannot recognize statement");
+        }
+
+        private Statement AddLineNumberAndReturn(Statement statement, int lineNumber)
+        {
+            statement.LineNumber = lineNumber;
+            return statement;
         }
 
         private Statement ParseReturnStatement()

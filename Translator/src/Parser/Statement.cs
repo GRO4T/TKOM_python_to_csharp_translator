@@ -23,6 +23,18 @@ namespace PythonCSharpTranslator
 
         public StatementType Type;
         public int NestingLevel = 0;
+        private int _lineNumber = 0;
+
+        public int LineNumber
+        {
+            get
+            {
+                if (_lineNumber == 0)
+                    throw new Exception("Statement line number is 0!");
+                return _lineNumber;
+            }
+            set => _lineNumber = value;
+        }
         
         public override string ToString()
         {
