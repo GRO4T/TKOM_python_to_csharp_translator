@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Transactions;
+﻿using System.Collections.Generic;
 using Serilog;
-
 using static PythonCSharpTranslator.StatementType;
 
 namespace PythonCSharpTranslator
 {
     public class SemanticAnalyzer
     {
+        // TODO move this to context
         private Dictionary<string, Statement> _symbolTable = new();
+        private TokenType? _returnType = null;
         private Parser _parser; 
         
         public SemanticAnalyzer(Parser parser)
@@ -27,7 +26,7 @@ namespace PythonCSharpTranslator
             return EvaluateStatement(_parser.GetNextStatement());
         }
 
-        private Statement EvaluateStatement(Statement statement)
+        private Statement EvaluateStatement(Statement statement, TokenType? returnType)
         {
             if (statement == null) return statement;
             if (statement.Type == BadStatementType)
@@ -109,8 +108,8 @@ namespace PythonCSharpTranslator
                     {
                         Name = assignmentStatement.LeftSide,
                         RightSide = assignmentStatement.RightSide,
-                        ConstantType = EvaluateConstantType(assignmentStatement.RightSide.GetValue().Type)
-                        
+                        ConstantType = EvaluateConstantType(assignmentStatement.RightSide.GetValue().Type),
+                        LineNumber = assignmentStatement.LineNumber
                     };
                 }
                 else
@@ -175,10 +174,10 @@ namespace PythonCSharpTranslator
                 else if (token.Type == TokenType.NotToken)
                 {
                     if (!tokenIterator.MoveNext())
-                        throw new TranslationError("Found not token but nothing after it");
+                        throw new TranslationError("Found not token but nothing after it", token.LineNumber);
                     var rvalue = EvaluateRValue(new RValue(tokenIterator.Current));
                     if (rvalue.ValueType != TokenType.BoolToken)
-                        throw new TranslationError("Cannot negate non-boolean value");
+                        throw new TranslationError("Cannot negate non-boolean value", token.LineNumber);
                 }
             }
         }
@@ -194,7 +193,7 @@ namespace PythonCSharpTranslator
                     if (expressionType == TokenType.UnknownToken)
                         expressionType = rvalue.ValueType;
                     else if (rvalue.ValueType != expressionType)
-                        throw new TranslationError("Cannot determine arithmetic expression type");
+                        throw new TranslationError("Cannot determine arithmetic expression type", expression[0].LineNumber);
                 }
             }
             return expressionType;
@@ -217,26 +216,44 @@ namespace PythonCSharpTranslator
                     var gotToken = functionCall.Args[i];
                     var expectedType = functionDef.ArgList[i].Item2;
                     EvaluateRValue(new RValue(gotToken));
-                    var gotTokenType = gotToken.IsConstantValue() ? EvaluateConstantType(gotToken.Type) : gotToken.Type;
+                    TokenType gotTokenType = TokenType.UnknownToken;
+                    if (gotToken.IsConstantValue())
+                        gotTokenType = EvaluateConstantType(gotToken.Type);
+                    else
+                        gotTokenType = ((VariableDef)_symbolTable[gotToken.Value.GetString()]).VariableType;
                     if (gotTokenType != expectedType)
                         throw new TranslationError(
-                            $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}", functionCall.LineNumber);
+                            $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}",
+                            functionCall.LineNumber);
                 }
             }
         }
 
         private void EvaluateFunctionDef(FunctionDef functionDef)
         {
-            foreach (var statement in functionDef.Statements)
+            var symbolTableCopy = new Dictionary<string, Statement>(_symbolTable);
+            foreach (var arg in functionDef.ArgList)
             {
-                EvaluateStatement(statement);
+                _symbolTable[arg.Item1] = new VariableDef {VariableType = arg.Item2};
+            }
+            EvaluateBlock(functionDef.Statements, functionDef.ReturnType);
+            _symbolTable = new Dictionary<string, Statement>(symbolTableCopy);
+        }
+
+        private void EvaluateBlock(List<Statement> statements, TokenType? returnType)
+        {
+            foreach (var statement in statements)
+            {
+                EvaluateStatement(statement, returnType);
                 if (statement.Type == ReturnStatementType)
                 {
                     var returnStatement = (ReturnStatement) statement;
-                    var returnType = EvaluateRValue(new RValue(returnStatement.Value)).ValueType;
-                    if (returnType != functionDef.ReturnType)
+                    var foundType = EvaluateRValue(new RValue(returnStatement.Value)).ValueType;
+                    if (returnType == null)
+                        throw new TranslationError($"Function should not return a value", statement.LineNumber);
+                    if (foundType != returnType)
                         throw new TranslationError(
-                            $"Wrong return type. Got {returnType}. Expected {functionDef.ReturnType}");
+                            $"Wrong return type. Got {foundType}. Expected {returnType}", statement.LineNumber);
                 }
                     
             }

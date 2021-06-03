@@ -241,7 +241,7 @@ namespace PythonCSharpTranslator
 
         private Statement ParseFunCall()
         {
-            var funCall = new FunctionCall{Name=_tokens[^2].Value.GetString()};
+            var funCall = new FunctionCall{Name=_tokens[^2].Value.GetString(), LineNumber = _tokens[^2].LineNumber};
             GetToken();
             if (_currentToken.Type == RightParenthesis)
             {

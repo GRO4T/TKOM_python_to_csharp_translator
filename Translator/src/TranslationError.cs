@@ -12,7 +12,7 @@ namespace PythonCSharpTranslator
         {
         }
 
-        public TranslationError(string msg, int lineNumber) : base($"{msg} at line:{lineNumber}")
+        public TranslationError(string msg, int lineNumber) : base($"Error at line {lineNumber}: {msg}")
         {
             
         }
