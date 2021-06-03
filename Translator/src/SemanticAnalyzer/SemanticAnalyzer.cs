@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Serilog;
 using static PythonCSharpTranslator.StatementType;
 
@@ -19,7 +18,8 @@ namespace PythonCSharpTranslator
             public Dictionary<string, Statement> SymbolTable = new();
             public TokenType? ReturnType = null;
         }
-        private Parser _parser;
+        
+        private readonly Parser _parser;
         private Context _globalContext = new();
         
         public SemanticAnalyzer(Parser parser)
@@ -39,7 +39,7 @@ namespace PythonCSharpTranslator
 
         private Statement EvaluateStatement(Statement statement, ref Context context)
         {
-            if (statement == null) return statement;
+            if (statement == null) return null;
             if (statement.Type == BadStatementType)
             {
                 Log.Error(statement.ToString());
@@ -56,22 +56,17 @@ namespace PythonCSharpTranslator
             string name;
             if ((name = statement.GetName()) != null)
             {
-                // check symbol already declared
                 if (context.SymbolTable.ContainsKey(name))
                 {
                     if (statement.Type == VariableDefType || statement.Type == FunctionDefType)
-                    {
                         throw new TranslationError($"Symbol {name} already declared", statement.LineNumber);
-                    }
                     EvaluateIfAssignmentAndSymbolDeclared(statement, context.SymbolTable[name], context);
                 }
                 else
                 {
                     EvaluateIfAssignmentAndNotDeclared(ref statement);
                     if (statement.Type == FunctionCallType)
-                    {
                         throw new TranslationError($"Function {name} not declared", statement.LineNumber);
-                    }
                     if (statement.Type == FunctionDefType)
                         EvaluateFunctionDef((FunctionDef) statement, context);
                     context.SymbolTable.Add(name, statement);
@@ -83,9 +78,9 @@ namespace PythonCSharpTranslator
         {
             if (statement.GetName() == null)
             {
-                EvaluateIsIfStatement(statement, context); 
-                EvaluateWhileLoop(statement, context);
-                EvaluateForLoop(statement, context);
+                EvaluateIf_IfStatement(statement, context); 
+                EvaluateIfWhileLoop(statement, context);
+                EvaluateIfForLoop(statement, context);
             }
         }
 
@@ -195,7 +190,7 @@ namespace PythonCSharpTranslator
             }
         }
 
-        private void EvaluateIsIfStatement(Statement statement, Context context)
+        private void EvaluateIf_IfStatement(Statement statement, Context context)
         {
             if (statement.Type == IfStatementType)
             {
@@ -205,7 +200,7 @@ namespace PythonCSharpTranslator
             }
         }
 
-        private void EvaluateWhileLoop(Statement statement, Context context)
+        private void EvaluateIfWhileLoop(Statement statement, Context context)
         {
             if (statement.Type == WhileLoopType)
             {
@@ -215,7 +210,7 @@ namespace PythonCSharpTranslator
             }
         }
 
-        private void EvaluateForLoop(Statement statement, Context context)
+        private void EvaluateIfForLoop(Statement statement, Context context)
         {
             if (statement.Type == ForLoopType)
             {
