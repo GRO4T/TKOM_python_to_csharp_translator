@@ -26,7 +26,7 @@ namespace PythonCSharpTranslator
 
         public bool IsConstantValue()
         {
-            return Type == RValueType.Value && ((Token) _value).Type != TokenType.Identifier;
+            return Type == RValueType.Value && GetValue().IsConstantValue();
         }
 
         public void SetFunCall(FunctionCall functionCall)

@@ -118,6 +118,7 @@ namespace PythonCSharpTranslator
                 }
                 return CreateBadStatement("Function declaration should end with either a colon or return type specifier");
             });
+            // logic
             if (_currentToken.Type == DefToken)
             {
                 var argList = new List<Tuple<string, TokenType>>();
@@ -374,105 +375,6 @@ namespace PythonCSharpTranslator
             GetToken();
             return varDef;
         }
-
-
-        private bool ParseBracketExpression(ref RValue.RValueType type, ref Statement statement)
-        {
-            if (SourceEnd || _currentToken.Type == NewlineToken || _currentToken.Type == Colon)
-            {
-                statement = CreateBadStatement("Empty bracket expression");
-                return false;
-            }
-            int brackets = 0;
-            Token lastToken = _tokens[^2];
-            while (!SourceEnd && _currentToken.Type != NewlineToken && _currentToken.Type != Colon)
-            {
-                if (_currentToken.Type == LeftParenthesis) brackets++;
-                else if (_currentToken.Type == RightParenthesis)
-                {
-                    if (lastToken.Type == LeftParenthesis || lastToken.IsUnaryOperator())
-                    {
-                        statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
-                        return false;
-                    }
-                    brackets--;
-                }
-                else if (_currentToken.IsUnaryOperator())
-                {
-                    if (_currentToken.IsArithmeticOperator())
-                    {
-                        if (type == RValue.RValueType.LogicalExpression)
-                        {
-                            statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
-                            return false;
-                        }
-                        type = RValue.RValueType.ArithmeticExpression;
-                    }
-                    else
-                    {
-                        if (type == RValue.RValueType.ArithmeticExpression)
-                        {
-                            statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
-                            return false;
-                        }
-                        type = RValue.RValueType.LogicalExpression;
-                    }
-
-                    if (lastToken.Type != RightParenthesis && !lastToken.IsParameter())
-                    {
-                        statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
-                        return false;
-                    }
-                }
-                else if (_currentToken.Type == NotToken)
-                {
-                    if (type == RValue.RValueType.ArithmeticExpression)
-                    {
-                        statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
-                        return false;
-                    }
-                    type = RValue.RValueType.LogicalExpression;
-                    if (lastToken.Type != LeftParenthesis && !lastToken.IsUnaryOperator() && lastToken.Type != AssignmentSymbol)
-                    {
-                        statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
-                        return false;
-                    }
-                }
-                else if (_currentToken.IsParameter())
-                {
-                    if (lastToken.Type != LeftParenthesis &&
-                        lastToken.Type != NotToken &&
-                        lastToken.Type != WhileToken &&
-                        lastToken.Type != IfToken &&
-                        !lastToken.IsUnaryOperator())
-                    {
-                        statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
-                        return false;
-                    }
-                }
-                else
-                {
-                    statement = CreateBadStatement($"{_currentToken} inside bracket expression does not make sense");
-                    return false;
-                }
-                lastToken = _currentToken;
-                GetToken(); 
-            }
-
-            if (brackets != 0)
-            {
-                statement = CreateBadStatement($"Number of opening and closing brackets does not match");
-                return false;
-            }
-
-            if (lastToken.IsUnaryOperator())
-            {
-                statement = CreateBadStatement($"Expression cannot end with an unary operator");
-                return false;
-            }
-
-            return true;
-        }
         
         private bool ParseBlock(ref List<Statement> statements, int nestingLevel, ref Statement statement)
         {
@@ -544,6 +446,176 @@ namespace PythonCSharpTranslator
         {
             return new BadStatement {BadToken = _currentToken, Description = desc};
         }
-        
+       
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Bracket expression parsing logic
+ * ---------------------------------------------------------------------------------------------------------------------
+ */
+        private bool ParseBracketExpression(ref RValue.RValueType type, ref Statement statement)
+        {
+            if (SourceEnd || _currentToken.Type == NewlineToken || _currentToken.Type == Colon)
+            {
+                statement = CreateBadStatement("Empty bracket expression");
+                return false;
+            }
+            int brackets = 0;
+            Token lastToken = _tokens[^2];
+            while (!SourceEnd && _currentToken.Type != NewlineToken && _currentToken.Type != Colon)
+            {
+                bool? result;
+                if (_currentToken.Type == LeftParenthesis)
+                {
+                    brackets++;
+                    BracketExpressionShouldReturnFalse(true, ref lastToken);
+                    continue;
+                }
+                if ((result = BracketExpressionNextTokenRightParenthesis(ref statement, ref brackets, lastToken)) != null)
+                {
+                    if (BracketExpressionShouldReturnFalse(result, ref lastToken)) return false;
+                    continue;
+                }
+                if ((result = BracketExpressionNextTokenUnaryOperator(ref type, ref statement, lastToken)) != null)
+                {
+                    if (BracketExpressionShouldReturnFalse(result, ref lastToken)) return false;
+                    continue;
+                }
+                if ((result = BracketExpressionNextTokenParameter(ref statement, lastToken)) != null)
+                {
+                    if (BracketExpressionShouldReturnFalse(result, ref lastToken)) return false;
+                    continue;
+                }
+                if ((result = BracketExpressionNextTokenNot(ref type, ref statement, lastToken)) != null)
+                {
+                    if (BracketExpressionShouldReturnFalse(result, ref lastToken)) return false;
+                    continue;
+                }
+                if (result == null)
+                {
+                    statement = CreateBadStatement($"{_currentToken} inside bracket expression does not make sense");
+                    return false;
+                }
+            }
+
+            return BracketExpressionEnd(ref statement, lastToken, brackets);
+        }
+
+        private bool BracketExpressionEnd(ref Statement statement, Token lastToken, int brackets)
+        {
+            if (brackets != 0)
+            {
+                statement = CreateBadStatement($"Number of opening and closing brackets does not match");
+                return false;
+            }
+
+            if (lastToken.IsUnaryOperator())
+            {
+                statement = CreateBadStatement($"Expression cannot end with an unary operator");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool BracketExpressionShouldReturnFalse(bool? subResult, ref Token lastToken)
+        {
+            if (subResult != null &&  (bool) subResult)
+            {
+                lastToken = _currentToken;
+                GetToken();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool? BracketExpressionNextTokenRightParenthesis(ref Statement statement, ref int brackets, Token lastToken)
+        {
+            if (_currentToken.Type == RightParenthesis)
+            {
+                if (lastToken.Type == LeftParenthesis || lastToken.IsUnaryOperator())
+                {
+                    statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
+                    return false;
+                }
+                brackets--;
+                return true;
+            }
+            return null;
+        }
+
+        private bool? BracketExpressionNextTokenUnaryOperator(ref RValue.RValueType type, ref Statement statement, Token lastToken)
+        {
+            if (_currentToken.IsUnaryOperator())
+            {
+                if (_currentToken.IsArithmeticOperator())
+                {
+                    if (type == RValue.RValueType.LogicalExpression)
+                    {
+                        statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
+                        return false;
+                    }
+                    type = RValue.RValueType.ArithmeticExpression;
+                }
+                else
+                {
+                    if (type == RValue.RValueType.ArithmeticExpression)
+                    {
+                        statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
+                        return false;
+                    }
+                    type = RValue.RValueType.LogicalExpression;
+                }
+
+                if (lastToken.Type != RightParenthesis && !lastToken.IsParameter())
+                {
+                    statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return null;
+        }
+
+        private bool? BracketExpressionNextTokenParameter(ref Statement statement, Token lastToken)
+        {
+            if (_currentToken.IsParameter())
+            {
+                if (lastToken.Type != LeftParenthesis &&
+                    lastToken.Type != NotToken &&
+                    lastToken.Type != WhileToken &&
+                    lastToken.Type != IfToken &&
+                    !lastToken.IsUnaryOperator())
+                {
+                    statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return null;
+        }
+
+        private bool? BracketExpressionNextTokenNot(ref RValue.RValueType type, ref Statement statement, Token lastToken)
+        {
+            if (_currentToken.Type == NotToken)
+            {
+                if (type == RValue.RValueType.ArithmeticExpression)
+                {
+                    statement = CreateBadStatement("Cannot determine expression type (logical or arithmetic)");
+                    return false;
+                }
+                type = RValue.RValueType.LogicalExpression;
+                if (lastToken.Type != LeftParenthesis && !lastToken.IsUnaryOperator() && lastToken.Type != AssignmentSymbol)
+                {
+                    statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
     }
 }
