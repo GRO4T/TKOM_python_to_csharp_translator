@@ -5,4 +5,4 @@ x = int(1)
 x = hello("123")
 x = (x + 1) * 2 / 4
 y = bool(True)
-y = not 1
+y = ((1 == 1) and (2 != 1))

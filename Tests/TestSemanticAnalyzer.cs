@@ -19,7 +19,7 @@ namespace Tests
             {
                 while (!semanticAnalyzer.IsEnd())
                 {
-                    var s = semanticAnalyzer.AnalyzeNextStatement();
+                    var s = semanticAnalyzer.EvaluateNextStatement();
                 }
             });
         }
@@ -32,7 +32,7 @@ namespace Tests
                 new Parser(new Lexer(new FileCharacterSource(filename))));
             while (!semanticAnalyzer.IsEnd())
             {
-                var s = semanticAnalyzer.AnalyzeNextStatement();
+                var s = semanticAnalyzer.EvaluateNextStatement();
             }
         }
     
@@ -41,7 +41,7 @@ namespace Tests
         {
             var semanticAnalyzer = new SemanticAnalyzer(
                 new Parser(new Lexer(new FileCharacterSource("Resources/semantic/constant_def.py"))));
-            var s = semanticAnalyzer.AnalyzeNextStatement();
+            var s = semanticAnalyzer.EvaluateNextStatement();
             Assert.Equal(StatementType.ConstantDefType, s.Type);
         }
     }

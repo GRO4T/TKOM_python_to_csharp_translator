@@ -22,77 +22,99 @@ namespace PythonCSharpTranslator
             return _parser.IsEnd();
         }
         
-        public Statement AnalyzeNextStatement()
+        public Statement EvaluateNextStatement()
         {
-            var s = _parser.GetNextStatement();
-            if (s == null) return s;
+            var statement = _parser.GetNextStatement();
+            if (statement == null) return statement;
             // check bad statement
-            if (s.Type == BadStatementType)
+            if (statement.Type == BadStatementType)
             {
-                Log.Error(s.ToString());
+                Log.Error(statement.ToString());
                 throw new TranslationError();
             }
+            EvaluateStatementIfHasName(ref statement);
+            EvaluateStatementIfDoesNotHaveName(statement);
+            Log.Information($"Fetched statement:\n {statement}");
+            return statement;
+        }
+
+        private void EvaluateStatementIfHasName(ref Statement statement)
+        {
             string name;
-            if ((name = s.GetName()) != null)
+            if ((name = statement.GetName()) != null)
             {
                 // check symbol already declared
                 if (_symbolTable.ContainsKey(name))
                 {
-                    if (s.Type == VariableDefType || s.Type == FunctionDefType)
+                    if (statement.Type == VariableDefType || statement.Type == FunctionDefType)
                     {
                         throw new TranslationError($"Symbol {name} already declared", _parser.GetLineNumber());
                     }
-                    else if (s.Type == AssignmentStatementType)
-                    {
-                        var symbol = _symbolTable[name];
-                        if (symbol.Type == ConstantDefType)
-                            throw new TranslationError($"Cannot modify constant", _parser.GetLineNumber());
-                        else if (symbol.Type == VariableDefType)
-                        {
-                            var variableDef = (VariableDef) symbol;
-                            var assignment = (AssignmentStatement) s;
-                            var varType = variableDef.VariableType;
-                            var assignedType = EvaluateRValue(assignment.RightSide).ValueType;
-                            if (variableDef.VariableType != assignedType)
-                                throw new TranslationError($"Variable type {varType} and assigned type {assignedType} do not match");
-                        }
-                        else
-                            throw new TranslationError(
-                                $"Cannot modify symbol at {_parser.GetLineNumber()}. First declared as {symbol.Type}");
-                    }
+                    EvaluateIfAssignmentAndSymbolDeclared(statement, _symbolTable[name]);
                 }
                 else
                 {
-                    if (s.Type == AssignmentStatementType)
-                    {
-                        var assignmentStatement = (AssignmentStatement) s;
-                        if (assignmentStatement.RightSide.IsConstantValue())
-                        {
-                            s = new ConstantDef
-                            {
-                                Name = assignmentStatement.LeftSide,
-                                RightSide = assignmentStatement.RightSide,
-                                ConstantType = EvaluateConstantType(assignmentStatement.RightSide.GetValue().Type)
-                                
-                            };
-                        }
-                        else
-                        {
-                            throw new TranslationError($"Variable {name} not declared", _parser.GetLineNumber());
-                        }
-                    }
-                    else if (s.Type == FunctionCallType)
+                    EvaluateIfAssignmentAndNotDeclared(ref statement);
+                    if (statement.Type == FunctionCallType)
                     {
                         throw new TranslationError($"Function {name} not declared", _parser.GetLineNumber());
                     }
-                    _symbolTable.Add(name, s);
+                    _symbolTable.Add(name, statement);
                 }
             }
-            // if (s.Type == Fun)
-            Log.Information($"Fetched statement:\n {s}");
-            return s;
         }
 
+        private void EvaluateStatementIfDoesNotHaveName(Statement statement)
+        {
+            if (statement.GetName() == null)
+            {
+                
+            }
+        }
+
+        private void EvaluateIfAssignmentAndSymbolDeclared(Statement statement, Statement declaredAs)
+        {
+            if (statement.Type == AssignmentStatementType)
+            {
+                if (declaredAs.Type == ConstantDefType)
+                    throw new TranslationError($"Cannot modify constant", _parser.GetLineNumber());
+                else if (declaredAs.Type == VariableDefType)
+                {
+                    var variableDef = (VariableDef) declaredAs;
+                    var assignment = (AssignmentStatement) statement;
+                    var varType = variableDef.VariableType;
+                    var assignedType = EvaluateRValue(assignment.RightSide).ValueType;
+                    if (variableDef.VariableType != assignedType)
+                        throw new TranslationError($"Variable type {varType} and assigned type {assignedType} do not match");
+                }
+                else
+                    throw new TranslationError(
+                        $"Cannot modify symbol at {_parser.GetLineNumber()}. First declared as {declaredAs.Type}");
+            }
+        }
+
+        private void EvaluateIfAssignmentAndNotDeclared(ref Statement statement)
+        {
+            if (statement.Type == AssignmentStatementType)
+            {
+                var assignmentStatement = (AssignmentStatement) statement;
+                if (assignmentStatement.RightSide.IsConstantValue())
+                {
+                    statement = new ConstantDef
+                    {
+                        Name = assignmentStatement.LeftSide,
+                        RightSide = assignmentStatement.RightSide,
+                        ConstantType = EvaluateConstantType(assignmentStatement.RightSide.GetValue().Type)
+                        
+                    };
+                }
+                else
+                {
+                    throw new TranslationError($"Variable {assignmentStatement.LeftSide} not declared", _parser.GetLineNumber());
+                }
+            }
+        }
+        
         private RValue EvaluateRValue(RValue rValue)
         {
             switch (rValue.Type)
@@ -199,8 +221,13 @@ namespace PythonCSharpTranslator
                 }
             }
         }
-        
-         
+
+        private void EvaluateFunctionDef(FunctionDef functionDef)
+        {
+            if (!_symbolTable.ContainsKey(functionDef.Name))
+                throw new TranslationError($"Symbol {functionDef.Name} already declared");
+            
+        }
         
         private static TokenType EvaluateConstantType(TokenType tokenType)
         {

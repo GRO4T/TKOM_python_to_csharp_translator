@@ -31,7 +31,7 @@ namespace PythonCSharpTranslator
                 Log.Information("Starting parsing...");
                 while (!semanticAnalyzer.IsEnd())
                 {
-                    var s = semanticAnalyzer.AnalyzeNextStatement();
+                    var s = semanticAnalyzer.EvaluateNextStatement();
                     if (s != null)
                         program.Statements.Add(s);
                 }
