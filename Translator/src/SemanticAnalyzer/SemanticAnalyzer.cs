@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Serilog;
 using static PythonCSharpTranslator.StatementType;
 
@@ -6,10 +7,20 @@ namespace PythonCSharpTranslator
 {
     public class SemanticAnalyzer
     {
-        // TODO move this to context
-        private Dictionary<string, Statement> _symbolTable = new();
-        private TokenType? _returnType = null;
-        private Parser _parser; 
+        class Context
+        {
+            public Context() {}
+            public Context(Context context)
+            {
+                SymbolTable = new Dictionary<string, Statement>(context.SymbolTable);
+                ReturnType = context.ReturnType;
+            } 
+            
+            public Dictionary<string, Statement> SymbolTable = new();
+            public TokenType? ReturnType = null;
+        }
+        private Parser _parser;
+        private Context _globalContext = new();
         
         public SemanticAnalyzer(Parser parser)
         {
@@ -23,10 +34,10 @@ namespace PythonCSharpTranslator
         
         public Statement EvaluateNextStatement()
         {
-            return EvaluateStatement(_parser.GetNextStatement());
+            return EvaluateStatement(_parser.GetNextStatement(), ref _globalContext);
         }
 
-        private Statement EvaluateStatement(Statement statement, TokenType? returnType)
+        private Statement EvaluateStatement(Statement statement, ref Context context)
         {
             if (statement == null) return statement;
             if (statement.Type == BadStatementType)
@@ -34,25 +45,25 @@ namespace PythonCSharpTranslator
                 Log.Error(statement.ToString());
                 throw new TranslationError();
             }
-            EvaluateStatementIfHasName(ref statement);
-            EvaluateStatementIfDoesNotHaveName(statement);
+            EvaluateStatementIfHasName(ref statement, ref context);
+            EvaluateStatementIfDoesNotHaveName(statement, context);
             Log.Information($"Fetched statement:\n {statement}");
             return statement;
         }
 
-        private void EvaluateStatementIfHasName(ref Statement statement)
+        private void EvaluateStatementIfHasName(ref Statement statement, ref Context context)
         {
             string name;
             if ((name = statement.GetName()) != null)
             {
                 // check symbol already declared
-                if (_symbolTable.ContainsKey(name))
+                if (context.SymbolTable.ContainsKey(name))
                 {
                     if (statement.Type == VariableDefType || statement.Type == FunctionDefType)
                     {
                         throw new TranslationError($"Symbol {name} already declared", statement.LineNumber);
                     }
-                    EvaluateIfAssignmentAndSymbolDeclared(statement, _symbolTable[name]);
+                    EvaluateIfAssignmentAndSymbolDeclared(statement, context.SymbolTable[name], context);
                 }
                 else
                 {
@@ -62,21 +73,21 @@ namespace PythonCSharpTranslator
                         throw new TranslationError($"Function {name} not declared", statement.LineNumber);
                     }
                     if (statement.Type == FunctionDefType)
-                        EvaluateFunctionDef((FunctionDef) statement);
-                    _symbolTable.Add(name, statement);
+                        EvaluateFunctionDef((FunctionDef) statement, context);
+                    context.SymbolTable.Add(name, statement);
                 }
             }
         }
 
-        private void EvaluateStatementIfDoesNotHaveName(Statement statement)
+        private void EvaluateStatementIfDoesNotHaveName(Statement statement, Context context)
         {
             if (statement.GetName() == null)
             {
-                
+                EvaluateIsIfStatement(statement, context); 
             }
         }
 
-        private void EvaluateIfAssignmentAndSymbolDeclared(Statement statement, Statement declaredAs)
+        private void EvaluateIfAssignmentAndSymbolDeclared(Statement statement, Statement declaredAs, Context context)
         {
             if (statement.Type == AssignmentStatementType)
             {
@@ -87,7 +98,7 @@ namespace PythonCSharpTranslator
                     var variableDef = (VariableDef) declaredAs;
                     var assignment = (AssignmentStatement) statement;
                     var varType = variableDef.VariableType;
-                    var assignedType = EvaluateRValue(assignment.RightSide).ValueType;
+                    var assignedType = EvaluateRValue(assignment.RightSide, context).ValueType;
                     if (variableDef.VariableType != assignedType)
                         throw new TranslationError($"Variable type {varType} and assigned type {assignedType} do not match");
                 }
@@ -119,7 +130,7 @@ namespace PythonCSharpTranslator
             }
         }
         
-        private RValue EvaluateRValue(RValue rValue)
+        private RValue EvaluateRValue(RValue rValue, Context context)
         {
             switch (rValue.Type)
             {
@@ -130,11 +141,11 @@ namespace PythonCSharpTranslator
                     {
                         var identifierName = rValue.GetValue().Value.GetString();
                         Log.Debug(identifierName);
-                        if (!_symbolTable.ContainsKey(identifierName))
+                        if (!context.SymbolTable.ContainsKey(identifierName))
                             throw new TranslationError($"Symbol {identifierName} not declared");
                         else
                         {
-                            var symbol = _symbolTable[identifierName];
+                            var symbol = context.SymbolTable[identifierName];
                             if (symbol.Type != VariableDefType)
                                 throw new TranslationError($"Symbol declared as {symbol.Type} used as VariableDefType");
                             var variableDef = (VariableDef) symbol;
@@ -144,16 +155,16 @@ namespace PythonCSharpTranslator
                     break;
                 case RValue.RValueType.FunCall:
                     var funCall = rValue.GetFunCall();
-                    EvaluateFunctionCall(funCall);
-                    var returnType = ((FunctionDef) _symbolTable[funCall.Name]).ReturnType;
+                    EvaluateFunctionCall(funCall, context);
+                    var returnType = ((FunctionDef) context.SymbolTable[funCall.Name]).ReturnType;
                     if (returnType != null)
                         rValue.ValueType = (TokenType) returnType;
                     break;
                 case RValue.RValueType.ArithmeticExpression:
-                    rValue.ValueType = EvaluateArithmeticExpression(rValue.GetArithmeticExpression());
+                    rValue.ValueType = EvaluateArithmeticExpression(rValue.GetArithmeticExpression(), context);
                     break;
                 case RValue.RValueType.LogicalExpression:
-                    EvaluateLogicalExpression(rValue.GetLogicalExpression());
+                    EvaluateLogicalExpression(rValue.GetLogicalExpression(), context);
                     rValue.ValueType = TokenType.BoolToken;
                     break;
             }
@@ -161,7 +172,7 @@ namespace PythonCSharpTranslator
             return rValue;
         }
 
-        private void EvaluateLogicalExpression(List<Token> expression)
+        private void EvaluateLogicalExpression(List<Token> expression, Context context)
         {
             var tokenIterator = expression.GetEnumerator();
             while (tokenIterator.MoveNext())
@@ -169,27 +180,37 @@ namespace PythonCSharpTranslator
                 var token = tokenIterator.Current;
                 if (token.IsParameter())
                 {
-                    EvaluateRValue(new RValue(token));
+                    EvaluateRValue(new RValue(token), context);
                 }
                 else if (token.Type == TokenType.NotToken)
                 {
                     if (!tokenIterator.MoveNext())
                         throw new TranslationError("Found not token but nothing after it", token.LineNumber);
-                    var rvalue = EvaluateRValue(new RValue(tokenIterator.Current));
+                    var rvalue = EvaluateRValue(new RValue(tokenIterator.Current), context);
                     if (rvalue.ValueType != TokenType.BoolToken)
                         throw new TranslationError("Cannot negate non-boolean value", token.LineNumber);
                 }
             }
         }
 
-        private TokenType EvaluateArithmeticExpression(List<Token> expression)
+        private void EvaluateIsIfStatement(Statement statement, Context context)
+        {
+            if (statement.Type == IfStatementType)
+            {
+                var ifStatement = (IfStatement) statement;
+                EvaluateLogicalExpression(ifStatement.Condition, context);
+                EvaluateBlock(ifStatement.Statements, context);
+            }
+        }
+
+        private TokenType EvaluateArithmeticExpression(List<Token> expression, Context context)
         {
             TokenType expressionType = TokenType.UnknownToken;
             foreach (var token in expression)
             {
                 if (token.IsParameter())
                 {
-                    var rvalue = EvaluateRValue(new RValue(token));
+                    var rvalue = EvaluateRValue(new RValue(token), context);
                     if (expressionType == TokenType.UnknownToken)
                         expressionType = rvalue.ValueType;
                     else if (rvalue.ValueType != expressionType)
@@ -199,13 +220,13 @@ namespace PythonCSharpTranslator
             return expressionType;
         }
 
-        private void EvaluateFunctionCall(FunctionCall functionCall)
+        private void EvaluateFunctionCall(FunctionCall functionCall, Context context)
         {
-            if (!_symbolTable.ContainsKey(functionCall.Name))
+            if (!context.SymbolTable.ContainsKey(functionCall.Name))
                 throw new TranslationError($"Function {functionCall.Name} not declared", functionCall.LineNumber);
             else
             {
-                var symbol = _symbolTable[functionCall.Name];
+                var symbol = context.SymbolTable[functionCall.Name];
                 if (symbol.Type != FunctionDefType)
                     throw new TranslationError($"Symbol declared as {symbol.Type} but used as {functionCall.Type}", functionCall.LineNumber);
                 var functionDef = (FunctionDef) symbol;
@@ -215,12 +236,12 @@ namespace PythonCSharpTranslator
                 {
                     var gotToken = functionCall.Args[i];
                     var expectedType = functionDef.ArgList[i].Item2;
-                    EvaluateRValue(new RValue(gotToken));
+                    EvaluateRValue(new RValue(gotToken), context);
                     TokenType gotTokenType = TokenType.UnknownToken;
                     if (gotToken.IsConstantValue())
                         gotTokenType = EvaluateConstantType(gotToken.Type);
                     else
-                        gotTokenType = ((VariableDef)_symbolTable[gotToken.Value.GetString()]).VariableType;
+                        gotTokenType = ((VariableDef)context.SymbolTable[gotToken.Value.GetString()]).VariableType;
                     if (gotTokenType != expectedType)
                         throw new TranslationError(
                             $"Argument number {i + 1}. Types do not match. Expected {expectedType}. Got {gotTokenType}",
@@ -229,33 +250,33 @@ namespace PythonCSharpTranslator
             }
         }
 
-        private void EvaluateFunctionDef(FunctionDef functionDef)
+        private void EvaluateFunctionDef(FunctionDef functionDef, Context context)
         {
-            var symbolTableCopy = new Dictionary<string, Statement>(_symbolTable);
+            var localContext = new Context(context);
             foreach (var arg in functionDef.ArgList)
             {
-                _symbolTable[arg.Item1] = new VariableDef {VariableType = arg.Item2};
+                localContext.SymbolTable[arg.Item1] = new VariableDef {VariableType = arg.Item2};
             }
-            EvaluateBlock(functionDef.Statements, functionDef.ReturnType);
-            _symbolTable = new Dictionary<string, Statement>(symbolTableCopy);
+            localContext.ReturnType = functionDef.ReturnType;
+            EvaluateBlock(functionDef.Statements, localContext);
         }
 
-        private void EvaluateBlock(List<Statement> statements, TokenType? returnType)
+        private void EvaluateBlock(List<Statement> statements, Context context)
         {
             foreach (var statement in statements)
             {
-                EvaluateStatement(statement, returnType);
+                var localContext = new Context(context);
+                EvaluateStatement(statement, ref localContext);
                 if (statement.Type == ReturnStatementType)
                 {
                     var returnStatement = (ReturnStatement) statement;
-                    var foundType = EvaluateRValue(new RValue(returnStatement.Value)).ValueType;
-                    if (returnType == null)
+                    var foundType = EvaluateRValue(new RValue(returnStatement.Value), context).ValueType;
+                    if (context.ReturnType == null)
                         throw new TranslationError($"Function should not return a value", statement.LineNumber);
-                    if (foundType != returnType)
+                    if (foundType != context.ReturnType)
                         throw new TranslationError(
-                            $"Wrong return type. Got {foundType}. Expected {returnType}", statement.LineNumber);
+                            $"Wrong return type. Got {foundType}. Expected {context.ReturnType}", statement.LineNumber);
                 }
-                    
             }
         }
         
