@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Transactions;
 using Serilog;
 using static PythonCSharpTranslator.StatementType;
 
@@ -169,12 +170,23 @@ namespace PythonCSharpTranslator
             return rValue;
         }
 
+        private void PrintTokenList(List<Token> tokenList)
+        {
+            string line = "";
+            foreach (var token in tokenList)
+            {
+                line += $"{token.ToString()} ";
+                // line += token.Value.ToString();
+            }
+            Log.Information(line);
+        }
         private void EvaluateLogicalExpression(List<Token> expression, Context context)
         {
             var tokenIterator = expression.GetEnumerator();
-            while (tokenIterator.MoveNext())
+            int i = 0;
+            while (i < expression.Count)
             {
-                var token = tokenIterator.Current;
+                var token = expression[i];
                 if (token.IsParameter())
                 {
                     EvaluateRValue(new RValue(token), context);
@@ -187,6 +199,46 @@ namespace PythonCSharpTranslator
                     if (rvalue.ValueType != TokenType.BoolToken)
                         throw new TranslationError("Cannot negate non-boolean value", token.LineNumber);
                 }
+                else if (token.IsUnaryOperator())
+                {
+                    EvaluateUnaryOperator(i, expression, context);
+                }
+                i++;
+            }
+        }
+
+        private void EvaluateUnaryOperator(int index, List<Token> expression, Context context)
+        {
+            TokenType leftSideType = TokenType.BoolToken;
+            TokenType rightSideType = TokenType.BoolToken;
+            var op = expression[index];
+            if (expression[index - 1].IsParameter()) // 1 and ..
+                leftSideType = EvaluateRValue(new RValue(expression[index - 1]), context).ValueType;
+            else // (1) and ..
+            {
+                int x = 2;
+                while (!expression[index - x].IsParameter())
+                    x++;
+                if (!expression[index - x - 1].IsUnaryOperator())
+                    leftSideType = EvaluateRValue(new RValue(expression[index - x]), context).ValueType;
+            }
+            if (expression[index + 1].IsParameter()) // ... and 1
+                rightSideType = EvaluateRValue(new RValue(expression[index + 1]), context).ValueType;
+            else // ... and (1)
+            {
+                int x = 2;
+                while (!expression[index + x].IsParameter())
+                    x++;
+                if (!expression[index + x + 1].IsUnaryOperator())
+                    rightSideType = EvaluateRValue(new RValue(expression[index + x]), context).ValueType;
+            } 
+            if ((op.Type == TokenType.AndToken || op.Type == TokenType.OrToken) && (leftSideType != TokenType.BoolToken || rightSideType != TokenType.BoolToken))
+            {
+                throw new TranslationError("Both operands should be of bool type", op.LineNumber);
+            }
+            else if (leftSideType != rightSideType)
+            {
+                throw new TranslationError("Both operands should be of the same type", op.LineNumber);
             }
         }
 
