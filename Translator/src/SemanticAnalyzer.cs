@@ -281,14 +281,14 @@ namespace PythonCSharpTranslator
 
         private void EvaluateBlock(List<Statement> statements, Context context)
         {
+            var localContext = new Context(context);
             for (int i = 0; i < statements.Count; i++)
             {
-                var localContext = new Context(context);
                 statements[i] = EvaluateStatement(statements[i], ref localContext);
                 if (statements[i].Type == ReturnStatementType)
                 {
                     var returnStatement = (ReturnStatement) statements[i];
-                    var foundType = EvaluateRValue(new RValue(returnStatement.Value), context).ValueType;
+                    var foundType = EvaluateRValue(new RValue(returnStatement.Value), localContext).ValueType;
                     if (context.ReturnType == null)
                         throw new TranslationError($"Function should not return a value", statements[i].LineNumber);
                     if (foundType != context.ReturnType)

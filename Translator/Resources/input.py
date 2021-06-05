@@ -1,22 +1,7 @@
-﻿def hello(x: str, y: bool, z: float) -> str:
-    x = 1
-    z = float(2.5)
-    return False
-    while (4) == 1:
+﻿var = 3
+def func(arg: int) -> int:
+    loc_var = int(2)
+    loc_var = loc_var + 2
+    def hello() -> bool:
         return False
-    
-hello()
-x = hello()
-z = (x * y * z)
-w = x == "123"
-y = int(2)
-
-for i in range(0, 5):
-    return True
-
-
-if x == 2:
-    hello(1, 2, 3)
-
-while True:
-    x = x + 1
+    return loc_var

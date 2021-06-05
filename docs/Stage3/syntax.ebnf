@@ -2,25 +2,23 @@ newline ::= "\n"
 tab ::= "\t"
 
 identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
-type ::= "int" | "float" | "string" | "bool"
+type ::= "int" | "float" | "str" | "bool"
 digit ::= [0-9]
 
 logicalUnaryOperator ::= "<=" | "<" | ">=" | ">" | "==" | "!="
+arithmeticUnaryOperator ::= "*" | "/" | "-" | "+"
 
 integerConstant ::= ([1-9] digit*) | "0"
 decimalConstant ::= ([1-9] digit*) | "0" "." digit* [1-9] 
 logicalConstant ::= True | False
 string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
-value ::= 
+constantValue ::= 
 	integerConstant | decimalConstant | logicalConstant | string
 
-parameter ::= value | identifier
-
-logicalFormula ::=  
-	(parameter logicalUnaryOperator parameter) | (not? parameter)
+parameter ::= constantValue | identifier
 
 logicalExpression ::= 
-	"(" recursiveLogicalExpression ")" | logicalFormula
+	"(" recursiveLogicalExpression ")" | (parameter logicalUnaryOperator parameter) | (not? parameter)
 
 recursiveLogicalExpression ::= 
 	(logicalExpression | (logicalExpression logicalUnaryOperator logicalExpression)) 
@@ -60,7 +58,7 @@ functionDef ::=
 	(tab statement newline)+
 
 assignment ::= 
-	identifier "=" (value | identifier | function_call | logicalExpression | arithmeticExpression)
+	identifier "=" (constantValue | identifier | function_call | logicalExpression | arithmeticExpression)
 
 variableDef ::= 
 	identifier "=" type "(" ((parameter ",")* parameter)? ")"
