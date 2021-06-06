@@ -182,7 +182,6 @@ namespace PythonCSharpTranslator
         }
         private void EvaluateLogicalExpression(List<Token> expression, Context context)
         {
-            var tokenIterator = expression.GetEnumerator();
             int i = 0;
             while (i < expression.Count)
             {
@@ -193,9 +192,10 @@ namespace PythonCSharpTranslator
                 }
                 else if (token.Type == TokenType.NotToken)
                 {
-                    if (!tokenIterator.MoveNext())
+                    i++;
+                    if (i >= expression.Count)
                         throw new TranslationError("Found not token but nothing after it", token.LineNumber);
-                    var rvalue = EvaluateRValue(new RValue(tokenIterator.Current), context);
+                    var rvalue = EvaluateRValue(new RValue(expression[i]), context);
                     if (rvalue.ValueType != TokenType.BoolToken)
                         throw new TranslationError("Cannot negate non-boolean value", token.LineNumber);
                 }

@@ -5,5 +5,3 @@ def func(arg: int) -> int:
     return loc_var
 
 x = bool(True)
-
-x = (1 == 2) and ((1 == 2))
