@@ -1,0 +1,66 @@
+newline ::= "\n"
+tab ::= "\t"
+
+identifier ::= [a-zA-Z_] [a-zA-Z0-9_]*
+type ::= "int" | "float" | "str" | "bool"
+digit ::= [0-9]
+
+logicalUnaryOperator ::= "<=" | "<" | ">=" | ">" | "==" | "!="
+arithmeticUnaryOperator ::= "*" | "/" | "-" | "+"
+
+integerConstant ::= ([1-9] digit*) | "0"
+decimalConstant ::= ([1-9] digit*) | "0" "." digit* [1-9] 
+logicalConstant ::= True | False
+string ::= '"' ([^btnfr"'] | ("\" [btnfr"']))* '"'
+constantValue ::= 
+	integerConstant | decimalConstant | logicalConstant | string
+
+parameter ::= constantValue | identifier
+
+logicalExpression ::= 
+	"(" recursiveLogicalExpression ")" | (parameter logicalUnaryOperator parameter) | (not? parameter)
+
+recursiveLogicalExpression ::= 
+	(logicalExpression | (logicalExpression logicalUnaryOperator logicalExpression)) 
+
+arithmeticExpression ::=
+	"(" recursiveArithmeticExpression ")" | parameter | (parameter arithmeticUnaryOperator paramter)
+
+recursiveArithmeticExpression ::= 
+	(arithmeticExpression | (arithmeticExpression arithmeticUnaryOperator arithmeticExpression))
+
+statement ::= 
+	funcCallOrVarDefOrAssign | ifStatement | whileLoop | forLoop | functionDef
+
+funcCallOrVarDefOrAssign ::=
+	 function_call | variableDef | assignment
+
+function_call ::=
+	 identifier "(" ((parameter ",")* parameter)? ")"
+
+ifStatement ::= 
+	"if" logicalExpression ":" newline
+	(tab statement newline)+
+
+whileLoop ::= 
+	"while" logicalExpression ":" newline
+	(tab statement newline)+
+
+forLoop ::= 
+	"for" identifier "in" "range"
+    "(" integerConstant "," integerConstant ")" ":" newline
+	(tab statement newline)+
+
+functionDef ::= 
+	"def" identifier 
+	"(" ( ((identifier ":" type) ",")* (identifier ":" type) )? ")"
+	("->" type)? ":" newline
+	(tab statement newline)+
+
+assignment ::= 
+	identifier "=" (constantValue | identifier | function_call | logicalExpression | arithmeticExpression)
+
+variableDef ::= 
+	identifier "=" type "(" ((parameter ",")* parameter)? ")"
+
+program ::= (statement newline)*

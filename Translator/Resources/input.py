@@ -5,3 +5,9 @@ def func(arg: int) -> int:
     return loc_var
 
 x = bool(True)
+y = int(0)
+
+y = 2 * 2 + 2
+
+
+x = y == 5

@@ -233,6 +233,23 @@ namespace Tests
             Assert.Equal(AssignmentStatementType, ifStatement.Statements[0].Type);
             Assert.Equal(ReturnStatementType, ifStatement.Statements[1].Type);
         }
+
+        [Theory]
+        [InlineData("Resources/parser/logical_expression6.py", new [] {Identifier, EqualSymbol, IntegerConstant})]
+        public void ParseLogicalExpression(string filename, TokenType[] expectedTokens)
+        {
+            var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
+            var s = parser.GetNextStatement();
+            Assert.Equal(AssignmentStatementType, s.Type);
+            var assignment = (AssignmentStatement) s;
+            Assert.Equal(RValue.RValueType.LogicalExpression, assignment.RightSide.Type);
+            var expression = assignment.RightSide.GetLogicalExpression();
+            Assert.Equal(expectedTokens.Length, expression.Count);
+            for (int i = 0; i < expectedTokens.Length; i++) 
+            {
+                Assert.Equal(expectedTokens[i], expression[i].Type);
+            }
+        }
         
     }
 }
