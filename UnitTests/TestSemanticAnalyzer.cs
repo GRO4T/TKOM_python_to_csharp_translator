@@ -10,6 +10,8 @@ namespace Tests
         [InlineData("Resources/semantic/variable_not_declared.py")]
         [InlineData("Resources/semantic/constant_modified.py")]
         [InlineData("Resources/semantic/modify_function_def.py")]
+        [InlineData("Resources/semantic/symbol_already_declared.py")]
+        [InlineData("Resources/semantic/variable_wrong_assignment.py")]
         public void AnalyzeBadCode(string filename)
         {
             var semanticAnalyzer = new SemanticAnalyzer(

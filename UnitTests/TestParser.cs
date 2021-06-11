@@ -76,16 +76,16 @@ namespace Tests
         }
 
         [Theory]
-        [InlineData("Resources/parser/logical_expression1.py", AssignmentStatementType)]
-        [InlineData("Resources/parser/logical_expression2.py", AssignmentStatementType)]
-        [InlineData("Resources/parser/logical_expression3.py", AssignmentStatementType)]
-        [InlineData("Resources/parser/logical_expression4.py", AssignmentStatementType)]
-        [InlineData("Resources/parser/logical_expression5.py", AssignmentStatementType)]
-        [InlineData("Resources/parser/logical_expression_bad1.py", BadStatementType)]
-        [InlineData("Resources/parser/logical_expression_bad2.py", BadStatementType)]
-        [InlineData("Resources/parser/logical_expression_bad3.py", BadStatementType)]
-        [InlineData("Resources/parser/logical_expression_bad4.py", BadStatementType)]
-        [InlineData("Resources/parser/logical_expression_bad5.py", BadStatementType)]
+        [InlineData("Resources/parser/simple_logical_expression.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/double_brackets.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression_with_not.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression_with_not_and_and.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/not_without_brackets.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/brackets_not_match.py", BadStatementType)]
+        [InlineData("Resources/parser/double_not.py", BadStatementType)]
+        [InlineData("Resources/parser/empty_brackets.py", BadStatementType)]
+        [InlineData("Resources/parser/empty_logical_expression.py", BadStatementType)]
+        [InlineData("Resources/parser/no_right_operand.py", BadStatementType)]
         [InlineData("Resources/parser/arithmetic_expression1.py", AssignmentStatementType)]
         [InlineData("Resources/parser/arithmetic_expression2.py", AssignmentStatementType)]
         [InlineData("Resources/parser/if_statement.py", IfStatementType)]
@@ -235,7 +235,7 @@ namespace Tests
         }
 
         [Theory]
-        [InlineData("Resources/parser/logical_expression6.py", new [] {Identifier, EqualSymbol, IntegerConstant})]
+        [InlineData("Resources/parser/equal_not_brackets.py", new [] {Identifier, EqualSymbol, IntegerConstant})]
         public void ParseLogicalExpression(string filename, TokenType[] expectedTokens)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
