@@ -162,12 +162,12 @@ namespace Tests
         }
     
         [Theory]
-        [InlineData("Resources/int_value_then_float_value.py", new[]
+        [InlineData("Resources/lexer/int_value_then_float_value.py", new[]
         {
             Identifier, AssignmentSymbol, IntegerConstant, NewlineToken,
             Identifier, AssignmentSymbol, DecimalConstant, NewlineToken
         })]
-        [InlineData("Resources/function.py", new[]
+        [InlineData("Resources/lexer/function.py", new[]
         {
             DefToken, Identifier, LeftParenthesis, Identifier, Colon, IntToken, RightParenthesis, Arrow,
             FloatToken, Colon, NewlineToken, TabToken, Identifier, AssignmentSymbol, IntegerConstant, NewlineToken 
@@ -191,7 +191,7 @@ namespace Tests
         [Fact]
         public void ParseFunctionCheckIdentifierValues()
         {
-            Lexer lexer = new Lexer(new FileCharacterSource("Resources/function.py"));
+            Lexer lexer = new Lexer(new FileCharacterSource("Resources/lexer/function.py"));
             Token token;
             var tokens = new List<Token>();
             while ((token = lexer.GetNextToken()).Type != End)

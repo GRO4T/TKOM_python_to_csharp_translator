@@ -76,25 +76,25 @@ namespace Tests
         }
 
         [Theory]
-        [InlineData("Resources/logical_expression1.py", AssignmentStatementType)]
-        [InlineData("Resources/logical_expression2.py", AssignmentStatementType)]
-        [InlineData("Resources/logical_expression3.py", AssignmentStatementType)]
-        [InlineData("Resources/logical_expression4.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression1.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression2.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression3.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/logical_expression4.py", AssignmentStatementType)]
         [InlineData("Resources/parser/logical_expression5.py", AssignmentStatementType)]
-        [InlineData("Resources/logical_expression_bad1.py", BadStatementType)]
-        [InlineData("Resources/logical_expression_bad2.py", BadStatementType)]
-        [InlineData("Resources/logical_expression_bad3.py", BadStatementType)]
-        [InlineData("Resources/logical_expression_bad4.py", BadStatementType)]
-        [InlineData("Resources/logical_expression_bad5.py", BadStatementType)]
-        [InlineData("Resources/arithmetic_expression1.py", AssignmentStatementType)]
-        [InlineData("Resources/arithmetic_expression2.py", AssignmentStatementType)]
-        [InlineData("Resources/if_statement.py", IfStatementType)]
-        [InlineData("Resources/while_statement.py", WhileLoopType)]
-        [InlineData("Resources/for_loop.py", ForLoopType)]
-        [InlineData("Resources/function_def_no_args_no_ret_value.py", FunctionDefType)]
-        [InlineData("Resources/function_def_no_args_ret_value.py", FunctionDefType)]
-        [InlineData("Resources/function_def_one_arg.py", FunctionDefType)]
-        [InlineData("Resources/function_def_mult_args_ret_value.py", FunctionDefType)]
+        [InlineData("Resources/parser/logical_expression_bad1.py", BadStatementType)]
+        [InlineData("Resources/parser/logical_expression_bad2.py", BadStatementType)]
+        [InlineData("Resources/parser/logical_expression_bad3.py", BadStatementType)]
+        [InlineData("Resources/parser/logical_expression_bad4.py", BadStatementType)]
+        [InlineData("Resources/parser/logical_expression_bad5.py", BadStatementType)]
+        [InlineData("Resources/parser/arithmetic_expression1.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/arithmetic_expression2.py", AssignmentStatementType)]
+        [InlineData("Resources/parser/if_statement.py", IfStatementType)]
+        [InlineData("Resources/parser/while_statement.py", WhileLoopType)]
+        [InlineData("Resources/parser/for_loop.py", ForLoopType)]
+        [InlineData("Resources/parser/function_def_no_args_no_ret_value.py", FunctionDefType)]
+        [InlineData("Resources/parser/function_def_no_args_ret_value.py", FunctionDefType)]
+        [InlineData("Resources/parser/function_def_one_arg.py", FunctionDefType)]
+        [InlineData("Resources/parser/function_def_mult_args_ret_value.py", FunctionDefType)]
         public void ParseSingleStatement(string filename, StatementType expectedStatement)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
@@ -103,8 +103,8 @@ namespace Tests
         }
 
         [Theory]
-        [InlineData("Resources/function_def_then_var_def.py", new [] {FunctionDefType, VariableDefType})]
-        [InlineData("Resources/double_assignment.py", new [] {AssignmentStatementType, AssignmentStatementType})]
+        [InlineData("Resources/parser/function_def_then_var_def.py", new [] {FunctionDefType, VariableDefType})]
+        [InlineData("Resources/parser/double_assignment.py", new [] {AssignmentStatementType, AssignmentStatementType})]
         public void ParseMultipleStatements(string filename, StatementType[] expectedStatements)
         {
             var parser = new Parser(new Lexer(new FileCharacterSource(filename)));
@@ -118,7 +118,7 @@ namespace Tests
         [Fact]
         public void FunctionCallObjectBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/function_call.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/function_call.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(FunctionCallType, s.Type);
             var funCall = (FunctionCall) s;
@@ -132,7 +132,7 @@ namespace Tests
         [Fact]
         public void VariableDefBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/variable_def.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/variable_def.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(VariableDefType, s.Type);
             var varDef = (VariableDef) s;
@@ -145,7 +145,7 @@ namespace Tests
         [Fact]
         public void FunctionDefBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/function_def_mult_args_ret_value.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/function_def_mult_args_ret_value.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(FunctionDefType, s.Type);
             var funDef = (FunctionDef) s;
@@ -166,7 +166,7 @@ namespace Tests
         [Fact]
         public void ForLoopBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/for_loop.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/for_loop.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(ForLoopType, s.Type);
             var forLoop = (ForLoop) s;
@@ -179,7 +179,7 @@ namespace Tests
         [Fact]
         public void AssignmentBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/arithmetic_expression1.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/arithmetic_expression1.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(AssignmentStatementType, s.Type);
             var assignStatement = (AssignmentStatement) s;
@@ -199,7 +199,7 @@ namespace Tests
         [Fact]
         public void IfStatementBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/if_statement.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/if_statement.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(IfStatementType, s.Type);
             var ifStatement = (IfStatement) s;
@@ -212,7 +212,7 @@ namespace Tests
         [Fact]
         public void WhileLoopBuiltCorrectly()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/while_statement.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/while_statement.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(WhileLoopType, s.Type);
             var whileLoop = (WhileLoop) s;
@@ -224,7 +224,7 @@ namespace Tests
         [Fact]
         public void NestedStatements()
         {
-            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/nested_statements.py")));
+            var parser = new Parser(new Lexer(new FileCharacterSource("Resources/parser/nested_statements.py")));
             var s = parser.GetNextStatement();
             Assert.Equal(FunctionDefType, s.Type);
             var functionDef = (FunctionDef) s;

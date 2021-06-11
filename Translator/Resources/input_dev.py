@@ -4,7 +4,8 @@
     if x == 1:
         fdsa = 2
     for i in range(0, 1):
-        i = 2
+        i = 3
+    z = bool(True)
 
 x = int(1)
 x = hello(x)
