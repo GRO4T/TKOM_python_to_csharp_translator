@@ -1,0 +1,6 @@
+﻿------------------TEST--------------------
+Simple bad program.
+Should and with an error.
+Expected error message:
+    PythonCSharpTranslator.TranslationError: Error at line 2: Wrong return type. Got IntToken. Expected StrToken
+Output file is not created.

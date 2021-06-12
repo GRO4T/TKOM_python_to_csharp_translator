@@ -14,16 +14,20 @@ for subfolder in subfolders:
         for i in range(10):
             line = input.readline()
             if line != '':
-                print(line)
+                print(line, end='')
     print(executable_path)
-    call_output = subprocess.Popen([f"{executable_path}", input_file, "tmp"], stdout=subprocess.PIPE).communicate()[0].splitlines()
-    print(">>>>CALL OUTPUT (first 10 lines)")
-    for i in range(10):
+    output_file = f"{subfolder}\\output.cs"
+    call_output = subprocess.Popen([f"{executable_path}", input_file, output_file], stdout=subprocess.PIPE).communicate()[0].splitlines()
+    print(">>>>CALL OUTPUT (first 20 lines)")
+    for i in range(20):
         if i < len(call_output):
             print(call_output[i].decode('utf-8'))
-    print("====TRANSLATION RESULT (first 10 lines)")
-    with open("tmp") as output:
-        for i in range(10):
-            line = output.readline()
-            if line != '':
-                print(line)
+    print("====TRANSLATION RESULT (first 20 lines)")
+    try:
+        with open(output_file) as output:
+            for i in range(20):
+                line = output.readline()
+                if line != '':
+                    print(line, end='')
+    except FileNotFoundError:
+        pass

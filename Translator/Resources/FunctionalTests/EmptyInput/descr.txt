@@ -1,2 +1,4 @@
 ﻿------------------TEST--------------------
-ELO ELO 320
+Expected program output:
+    Program is empty. Exiting...
+Output file should be empty.

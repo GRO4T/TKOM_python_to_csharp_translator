@@ -1,0 +1,2 @@
+﻿------------------TEST--------------------
+Translation should succeed

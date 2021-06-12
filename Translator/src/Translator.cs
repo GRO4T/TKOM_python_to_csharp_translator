@@ -11,6 +11,11 @@ namespace PythonCSharpTranslator
     {
         public static string Translate(ProgramObject program)
         {
+            if (program.Statements.Count == 0)
+            {
+                Log.Information("Program is empty. Exiting...");
+                return "";
+            }
             ReorderStatements(ref program.Statements);
             IEnumerator<Statement> statementIterator = program.Statements.GetEnumerator();
             string sourceCode = "";
