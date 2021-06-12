@@ -70,10 +70,13 @@ namespace PythonCSharpTranslator
         {
             sourceCode += "\tstatic void Main(string[] args)\n";
             sourceCode += "\t{\n";
-            do
+            try
             {
-                sourceCode = TranslateTypesThatCanOccurOnEveryNestingLevel(sourceCode, statementIterator.Current, 2);
-            } while (statementIterator.MoveNext());
+                do
+                {
+                    sourceCode = TranslateTypesThatCanOccurOnEveryNestingLevel(sourceCode, statementIterator.Current, 2);
+                } while (statementIterator.MoveNext());
+            } catch (NullReferenceException e) {}
             sourceCode += "\t}\n";
             return sourceCode;
         }

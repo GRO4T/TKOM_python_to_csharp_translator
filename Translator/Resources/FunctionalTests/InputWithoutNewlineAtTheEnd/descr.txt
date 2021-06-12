@@ -1,0 +1,2 @@
+﻿------------------TEST--------------------
+What happens if input file does not have an empty newline at the end

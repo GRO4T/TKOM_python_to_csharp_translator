@@ -193,8 +193,6 @@ namespace PythonCSharpTranslator
                 else if (token.Type == TokenType.NotToken)
                 {
                     i++;
-                    if (i >= expression.Count)
-                        throw new TranslationError("Found not token but nothing after it", token.LineNumber);
                     var rvalue = EvaluateRValue(new RValue(expression[i]), context);
                     if (rvalue.ValueType != TokenType.BoolToken)
                         throw new TranslationError("Cannot negate non-boolean value", token.LineNumber);

@@ -512,6 +512,12 @@ namespace PythonCSharpTranslator
                 statement = CreateBadStatement($"Expression cannot end with an unary operator");
                 return false;
             }
+            
+            if (lastToken.Type == NotToken)
+            {
+                statement = CreateBadStatement($"Expression cannot end with a not token");
+                return false;
+            }
 
             return true;
         }
@@ -532,7 +538,7 @@ namespace PythonCSharpTranslator
         {
             if (_currentToken.Type == RightParenthesis)
             {
-                if (lastToken.Type == LeftParenthesis || lastToken.IsUnaryOperator())
+                if (lastToken.Type == NotToken || lastToken.Type == LeftParenthesis || lastToken.IsUnaryOperator())
                 {
                     statement = CreateBadStatement($"{_currentToken} is invalid after {lastToken}");
                     return false;

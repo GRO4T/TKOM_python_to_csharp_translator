@@ -1,0 +1,42 @@
+﻿[09:58:39 INF] Starting parsing...
+[09:58:39 INF] Fetched statement:
+ ReturnStatementType
+[09:58:39 INF] Fetched statement:
+ AssignmentStatementType
+[09:58:39 INF] Fetched statement:
+ ConstantDefType
+[09:58:39 INF] Fetched statement:
+ IfStatementType
+        ConstantDefType
+
+[09:58:39 INF] Fetched statement:
+ AssignmentStatementType
+[09:58:39 INF] Fetched statement:
+ ForLoopType
+        AssignmentStatementType
+
+[09:58:39 INF] Fetched statement:
+ VariableDefType
+[09:58:39 INF] Fetched statement:
+ FunctionDefType
+        ReturnStatementType
+        AssignmentStatementType
+        IfStatementType
+                ConstantDefType
+
+        ForLoopType
+                AssignmentStatementType
+
+        VariableDefType
+
+[09:58:39 INF] Fetched statement:
+ VariableDefType
+[09:58:39 ERR] PythonCSharpTranslator.TranslationError: Error at line 11: Function hllo not declared
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateFunctionCall(FunctionCall functionCall, Context context) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 296
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateRValue(RValue rValue, Context context) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 156
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateIfAssignmentAndSymbolDeclared(Statement statement, Statement declaredAs, Context context) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 99
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateStatementIfHasName(Statement& statement, Context& context) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 64
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateStatement(Statement statement, Context& context) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 49
+   at PythonCSharpTranslator.SemanticAnalyzer.EvaluateNextStatement() in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\SemanticAnalyzer.cs:line 38
+   at PythonCSharpTranslator.Program.Translate() in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\Program.cs:line 47
+   at PythonCSharpTranslator.Program.Main(String[] args) in C:\Users\Damian\Desktop\Laby\TKOM\python-csharp-translator\Translator\src\Program.cs:line 20

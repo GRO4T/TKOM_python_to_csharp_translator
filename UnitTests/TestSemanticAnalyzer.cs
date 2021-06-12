@@ -12,6 +12,10 @@ namespace Tests
         [InlineData("Resources/semantic/modify_function_def.py")]
         [InlineData("Resources/semantic/symbol_already_declared.py")]
         [InlineData("Resources/semantic/variable_wrong_assignment.py")]
+        [InlineData("Resources/semantic/negate_non_boolean.py")]
+        [InlineData("Resources/semantic/function_used_as_variable.py")]
+        [InlineData("Resources/semantic/logical_expression_ops_not_bool.py")]
+        [InlineData("Resources/semantic/arithmetic_expression_ops_not_same_type.py")]
         public void AnalyzeBadCode(string filename)
         {
             var semanticAnalyzer = new SemanticAnalyzer(

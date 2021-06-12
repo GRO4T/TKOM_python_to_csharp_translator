@@ -26,6 +26,11 @@ namespace PythonCSharpTranslator
             SetString(value);
         }
 
+        public TokenValue(double value)
+        {
+            SetDouble(value);
+        }
+
         public int GetInt()
         {
             return (int) Value;
