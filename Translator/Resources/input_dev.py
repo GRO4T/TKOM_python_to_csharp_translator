@@ -1,2 +1,1 @@
-﻿def hello() -> int:
-    return 1
+﻿4739sx = 2
